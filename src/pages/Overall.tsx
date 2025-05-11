@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Player, MINI_GAMES } from '@/utils/types';
 import { Trophy, ListX, Users2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
+// Icon imports
 import axeIconSrc from '@/assets/icons/gamemodes/axe.svg';
 import vanillaIconSrc from '@/assets/icons/gamemodes/vanila.svg';
 import smpIconSrc from '@/assets/icons/gamemodes/smp.svg';
@@ -20,7 +21,7 @@ const gameModeIconSources: { [key: string]: string } = {
   axe: axeIconSrc,
   mace: maceIconSrc,
   netherite: netheriteIconSrc,
-  potpvp: potIconSrc,
+  potpvp: potIconSrc, 
   uhc: uhcIconSrc,
   sword: swordIconSrc,
 };
@@ -38,8 +39,8 @@ const mapFromDbData = (dbData: any): Player => {
     id: dbData.id,
     username: dbData.username,
     skinUrl: dbData.skin_url,
-    overallRank: rankFromDb,
-    totalPoints: dbData.total_points,
+    overallRank: rankFromDb, // ეს გადაიწერება client-side რანკინგით
+    totalPoints: dbData.total_points, // <<--- აქ ხდება ქულების აღება
     badges: dbData.badges || [],
     lastTested: dbData.last_tested,
     tiers: dbData.tiers || {},
@@ -50,97 +51,97 @@ const mapFromDbData = (dbData: any): Player => {
 
 const Overall = () => {
   const [players, setPlayers] = useState<Player[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitiallyLoading, setIsInitiallyLoading] = useState(true);
+
+  const fetchPlayersAndRank = useCallback(async (isInitialCall = false) => {
+    if (isInitialCall) {
+      setIsInitiallyLoading(true);
+    }
+    // console.log(`Overall.tsx: Fetching players. Initial: ${isInitialCall}`);
+
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .order('total_points', { ascending: false, nullsLast: true })
+      .order('username', { ascending: true });
+
+    if (error) {
+      console.error('Overall.tsx: Error fetching players:', error);
+      if (isInitialCall) {
+        toast.error('Failed to load player rankings.');
+      }
+      // პოლინგის დროს შეცდომის შემთხვევაში, შესაძლოა ძველი მონაცემები შევინარჩუნოთ
+      // if (isInitialCall) setPlayers([]); 
+    } else if (data) {
+      // --- დიაგნოსტიკისთვის ---
+      // console.log('Overall.tsx: Raw data from Supabase:', JSON.parse(JSON.stringify(data.slice(0, 5)))); // პირველი 5 მოთამაშის ლოგი
+      
+      const clientSideRankedData = data.map((dbPlayer, index) => {
+        const player = mapFromDbData(dbPlayer); // აქ totalPoints უნდა აიღოს dbData.total_points-დან
+        return {
+          ...player,
+          overallRank: index + 1,
+        };
+      });
+
+      // --- დიაგნოსტიკისთვის ---
+      // if (players.length > 0 && clientSideRankedData.length > 0) {
+      //   const firstOldPlayer = players[0];
+      //   const firstNewPlayer = clientSideRankedData.find(p => p.id === firstOldPlayer.id);
+      //   if (firstNewPlayer && firstOldPlayer.totalPoints !== firstNewPlayer.totalPoints) {
+      //     console.log(`Overall.tsx: Points changed for ${firstNewPlayer.username}: ${firstOldPlayer.totalPoints} -> ${firstNewPlayer.totalPoints}`);
+      //   } else if (firstNewPlayer) {
+      //     console.log(`Overall.tsx: Points DID NOT change for ${firstNewPlayer.username}: ${firstNewPlayer.totalPoints}`);
+      //   }
+      // }
+      // console.log('Overall.tsx: Processed data being set to state:', JSON.parse(JSON.stringify(clientSideRankedData.slice(0,5))));
+
+
+      setPlayers(clientSideRankedData);
+    }
+
+    if (isInitialCall) {
+      setIsInitiallyLoading(false);
+    }
+  }, []); // useCallback-ს ცარიელი დამოკიდებულების მასივი
 
   useEffect(() => {
-    const fetchPlayers = async () => {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .order('total_points', { ascending: false, nullsLast: true })
-        .order('username', { ascending: true });
+    fetchPlayersAndRank(true); // საწყისი ჩატვირთვა
 
-      if (error) {
-        console.error('Error fetching players for Overall page:', error);
-        toast.error('Failed to load player rankings.');
-        setPlayers([]);
-      } else if (data) {
-        const clientSideRankedData = data.map((dbPlayer, index) => {
-          const player = mapFromDbData(dbPlayer);
-          return {
-            ...player,
-            overallRank: index + 1,
-          };
-        });
-        setPlayers(clientSideRankedData);
-      }
-      setIsLoading(false);
-    };
+    const intervalId = setInterval(() => {
+      // console.log(`Overall.tsx: Polling for rankings - ${new Date().toLocaleTimeString()}`);
+      fetchPlayersAndRank(false); // პოლინგი
+    }, 5000); // ყოველ 5 წამში
 
-    fetchPlayers();
-  }, []);
+    return () => {
+      // console.log('Overall.tsx: Clearing rankings polling interval.');
+      clearInterval(intervalId); // ინტერვალის გასუფთავება
+    };
+  }, [fetchPlayersAndRank]); // დამოკიდებულება fetchPlayersAndRank-ზე
 
-  const getRankStylingInfo = (rank: number | null | undefined): {
-    bg: string;
-    text: string;
-    trophyClass: string;
-    cardShadow?: string;
-  } => {
-    if (rank === null || rank === undefined) {
-      return { bg: 'bg-transparent', text: 'text-gray-500', trophyClass: 'hidden', cardShadow: 'shadow-none' };
-    }
-    if (rank === 1) return {
-      bg: 'bg-gradient-to-br from-yellow-400 via-[#ffc125] to-amber-500',
-      text: 'text-[#0a0e15]',
-      trophyClass: 'text-[#ffc125]',
-      cardShadow: 'shadow-[0_0px_18px_rgba(255,193,37,0.5)] hover:shadow-[0_0px_25px_rgba(255,193,37,0.7)]'
-    };
-    if (rank === 2) return {
-      bg: 'bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500',
-      text: 'text-[#0a0e15]',
-      trophyClass: 'text-slate-300',
-      cardShadow: 'shadow-[0_0px_12px_rgba(100,116,139,0.4)] hover:shadow-[0_0px_18px_rgba(100,116,139,0.6)]'
-    };
-    if (rank === 3) return {
-      bg: 'bg-gradient-to-br from-yellow-600 via-amber-700 to-yellow-800',
-      text: 'text-white',
-      trophyClass: 'text-yellow-400',
-      cardShadow: 'shadow-[0_0px_12px_rgba(202,138,4,0.4)] hover:shadow-[0_0px_18px_rgba(202,138,4,0.6)]'
-    };
-    return {
-      bg: 'bg-gray-700/40',
-      text: 'text-gray-300',
-      trophyClass: 'hidden',
-      cardShadow: 'shadow-md'
-    };
+  const getRankStylingInfo = (rank: number | null | undefined): { /* ... */ } => {
+    if (rank === null || rank === undefined) { return { bg: 'bg-transparent', text: 'text-gray-500', trophyClass: 'hidden', cardShadow: 'shadow-none' }; }
+    if (rank === 1) return { bg: 'bg-gradient-to-br from-yellow-400 via-[#ffc125] to-amber-500', text: 'text-[#0a0e15]', trophyClass: 'text-[#ffc125]', cardShadow: 'shadow-[0_0px_18px_rgba(255,193,37,0.5)] hover:shadow-[0_0px_25px_rgba(255,193,37,0.7)]'};
+    if (rank === 2) return { bg: 'bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500', text: 'text-[#0a0e15]', trophyClass: 'text-slate-300', cardShadow: 'shadow-[0_0px_12px_rgba(100,116,139,0.4)] hover:shadow-[0_0px_18px_rgba(100,116,139,0.6)]'};
+    if (rank === 3) return { bg: 'bg-gradient-to-br from-yellow-600 via-amber-700 to-yellow-800', text: 'text-white', trophyClass: 'text-yellow-400', cardShadow: 'shadow-[0_0px_12px_rgba(202,138,4,0.4)] hover:shadow-[0_0px_18px_rgba(202,138,4,0.6)]'};
+    return { bg: 'bg-gray-700/40', text: 'text-gray-300', trophyClass: 'hidden', cardShadow: 'shadow-md'};
   };
 
-  const getRankRowStyling = (rank: number | null | undefined, index: number): string => {
+  const getRankRowStyling = (rank: number | null | undefined, index: number): string => { 
     let baseHover = "hover:bg-[#2a2b34] transition-all duration-200 ease-in-out transform hover:scale-[1.015] hover:shadow-lg";
     let specialStyling = "";
-
     if (rank !== null && rank !== undefined) {
-      if (rank === 1) {
-        specialStyling = "bg-[#ffc125]/10 border-l-4 border-[#ffc125]";
-      } else if (rank === 2) {
-        specialStyling = "bg-slate-800/10 border-l-4 border-slate-500";
-      } else if (rank === 3) {
-        specialStyling = "bg-yellow-800/10 border-l-4 border-yellow-600";
-      } else if (index % 2 !== 0) {
-        specialStyling = "bg-[#0a0e15]/50";
-      } else {
-        specialStyling = "bg-[#1f2028]/30";
-      }
-    } else if (index % 2 !== 0) {
-      specialStyling = "bg-[#0a0e15]/50";
-    } else {
-      specialStyling = "bg-[#1f2028]/30";
-    }
+      if (rank === 1) specialStyling = "bg-[#ffc125]/10 border-l-4 border-[#ffc125]";
+      else if (rank === 2) specialStyling = "bg-slate-800/10 border-l-4 border-slate-500";
+      else if (rank === 3) specialStyling = "bg-yellow-800/10 border-l-4 border-yellow-600";
+      else if (index % 2 !== 0) specialStyling = "bg-[#0a0e15]/50";
+      else specialStyling = "bg-[#1f2028]/30";
+    } else if (index % 2 !== 0) specialStyling = "bg-[#0a0e15]/50";
+    else specialStyling = "bg-[#1f2028]/30";
     return `${specialStyling || 'bg-transparent'} ${baseHover}`;
   };
 
-  if (isLoading) {
+  if (isInitiallyLoading) {
     return (
       <div className="bg-[#0a0e15] text-gray-300 min-h-screen flex items-center justify-center">
         <p className="text-xl text-[#ffc125] font-minecraft animate-pulse">Loading Rankings...</p>
@@ -225,7 +226,7 @@ const Overall = () => {
                             <div
                               key={gameDetails.id}
                               className={`flex flex-col items-center p-1.5 rounded-md ${gameDetails.isPlayed ? 'bg-gray-700/20 hover:bg-gray-700/40' : 'bg-gray-800/30 opacity-60'} transition-all duration-200 w-11 sm:w-12 group ${gameDetails.isPlayed ? 'cursor-pointer' : 'cursor-default'}`}
-                              title={gameDetails.isPlayed ? `${gameDetails.name} - Tier: ${gameDetails.tier?.toUpperCase()}` : gameDetails.name}
+                              title={gameDetails.isPlayed ? `${gameDetails.name} - Tier: ${(gameDetails.tier as string)?.toUpperCase()}` : gameDetails.name}
                             >
                               <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mb-0.5">
                                 {gameDetails.isPlayed ? (
@@ -246,7 +247,6 @@ const Overall = () => {
                                   </span>
                                 )}
                               </div>
-                              {/* <<<--- აქ შეიცვალა ტექსტის ზომა და შიგთავსი "???"-თვის --->>> */}
                               <span className={`text-[10px] sm:text-xs font-semibold tracking-wider max-w-full truncate ${gameDetails.isPlayed ? 'text-amber-400 group-hover:text-amber-300' : 'text-gray-600'}`}>
                                 {gameDetails.isPlayed ? (gameDetails.tier as string)?.toUpperCase() : "???"}
                               </span>
@@ -261,21 +261,15 @@ const Overall = () => {
                 );
               })
             ) : (
-              <div className="p-10 text-center text-gray-500 flex flex-col items-center space-y-3">
-                <ListX className="w-12 h-12 text-gray-600" />
-                <p className="text-lg">No players available to display.</p>
-                <p className="text-sm">Please check back later or add players via the admin panel.</p>
-              </div>
+              !isInitiallyLoading && players.length === 0 && (
+                <div className="p-10 text-center text-gray-500 flex flex-col items-center space-y-3">
+                  <ListX className="w-12 h-12 text-gray-600" />
+                  <p className="text-lg">No players available to display.</p>
+                  <p className="text-sm">Please check back later or add players via the admin panel.</p>
+                </div>
+              )
             )}
           </div>
-
-          {players.length === 0 && !isLoading && (
-            <div className="p-10 text-center text-gray-500 flex flex-col items-center space-y-3">
-              <Users2 className="w-12 h-12 text-gray-600" />
-              <p className="text-lg">No players found.</p>
-              <p className="text-sm">Consider adding players to see rankings.</p>
-            </div>
-          )}
         </div>
       </div>
     </div>
