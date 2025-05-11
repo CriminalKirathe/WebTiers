@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Player, MINI_GAMES, TIER_LABELS, TierRating } from '@/utils/types'; // Assuming these types are correctly defined
+import { Player, MINI_GAMES, TIER_LABELS, TierRating } from '@/utils/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
-// SVG icon imports (ensure paths and filenames are correct)
+// SVG იმპორტები იგივე რჩება
 import vanillaIconUrl from '@/assets/icons/gamemodes/vanila.svg';
 import axeIconUrl from '@/assets/icons/gamemodes/axe.svg';
 import maceIconUrl from '@/assets/icons/gamemodes/mace.svg';
@@ -18,15 +18,9 @@ import uhcIconUrl from '@/assets/icons/gamemodes/uhc.svg';
 import swordIconUrl from '@/assets/icons/gamemodes/sword.svg';
 import smpIconUrl from '@/assets/icons/gamemodes/smp.svg';
 
-// mapFromDbData function remains the same as it's used elsewhere.
-// It will attempt to read dbData.overall_rank, but in PlayerProfile,
-// we will overwrite this value with the client-side calculated rank.
 const mapFromDbData = (dbData: any): Player | null => {
-  if (!dbData) {
-    // console.warn("[mapFromDbData] Received dbData is null or undefined."); // Developer log
-    return null;
-  }
-  let rankFromDb = dbData.overall_rank; // Rank read from DB (might be null/undefined)
+  if (!dbData) { return null; }
+  let rankFromDb = dbData.overall_rank;
   if (typeof rankFromDb === 'string') {
     const parsedRank = parseInt(rankFromDb, 10);
     rankFromDb = isNaN(parsedRank) ? null : parsedRank;
@@ -37,7 +31,7 @@ const mapFromDbData = (dbData: any): Player | null => {
     id: dbData.id,
     username: dbData.username,
     skinUrl: dbData.skin_url,
-    overallRank: rankFromDb, // This value will be overwritten in PlayerProfile
+    overallRank: rankFromDb,
     totalPoints: dbData.total_points,
     badges: dbData.badges || [],
     lastTested: dbData.last_tested,
@@ -59,100 +53,80 @@ const miniGameIcons: Record<string, string> = {
 };
 
 const PlayerProfile = () => {
-  const { playerId } = useParams<{ playerId: string }>();
+  const { playerId } = useParams<{ playerId: string }>(); // <<<--- ვიღებთ playerId-ს (UUID-ს) URL-დან
   const navigate = useNavigate();
   const [player, setPlayer] = useState<Player | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!playerId) {
+    if (!playerId) { // ვამოწმებთ playerId-ს და არა playerName-ს
       setIsLoading(false);
       setPlayer(null);
-      toast.error("Player ID is missing from URL."); // Already English
-      // console.warn("[PlayerProfile] Player ID is not provided in the URL."); // Developer log
+      toast.error("Player ID is missing from URL.");
       return;
     }
 
     const fetchProfileAndCalculateRank = async () => {
       setIsLoading(true);
-      setPlayer(null); // Clear previous player data
+      setPlayer(null);
 
       try {
-        // console.log('[PlayerProfile] Fetching data for playerId:', playerId); // Developer log
-        const { data: allPlayersData, error: allPlayersError } = await supabase
+        // 1. ვამოწმებთ, არსებობს თუ არა მოთამაშე ამ ID-ით
+        const { data: targetPlayerData, error: targetPlayerError } = await supabase
           .from('players')
-          .select('*') // Selects all fields. For optimization, select only necessary fields.
-          .order('total_points', { ascending: false, nullsLast: true })
-          .order('username', { ascending: true });
+          .select('*')
+          .eq('id', playerId) // <<<--- ვეძებთ ID სვეტით
+          .maybeSingle(); 
 
-        if (allPlayersError) {
-          console.error('Error fetching all players for ranking:', allPlayersError);
-          toast.error('Failed to load player rankings.');
+        if (targetPlayerError && targetPlayerError.code !== 'PGRST116') {
+          console.error(`Error fetching player by ID (${playerId}):`, targetPlayerError);
+          toast.error('Failed to load player profile.');
           setPlayer(null);
           setIsLoading(false);
           return;
         }
 
-        if (allPlayersData && allPlayersData.length > 0) {
-          // console.log('[PlayerProfile] Raw data received from Supabase for ranking:', JSON.stringify(allPlayersData, null, 2)); // Developer log for all players
-          let targetPlayerData: any = null;
-          let calculatedRank = 0;
-
-          for (let i = 0; i < allPlayersData.length; i++) {
-            if (allPlayersData[i].id === playerId) {
-              targetPlayerData = allPlayersData[i];
-              calculatedRank = i + 1;
-              break;
-            }
-          }
-
-          if (targetPlayerData) {
-            const mappedPlayerBase = mapFromDbData(targetPlayerData);
-
-            if (mappedPlayerBase) {
-              setPlayer({
-                ...mappedPlayerBase,
-                overallRank: calculatedRank,
-              });
-            } else {
-              console.error('Failed to map target player data.');
-              toast.error('Error processing player data.');
-              setPlayer(null);
-            }
-          } else {
-            // console.warn(`Player with ID ${playerId} not found in ranked list. Attempting individual fetch.`); // Developer log
-            toast.info('Player not found in rankings.');
-
-            const { data: singlePlayerData, error: singlePlayerError } = await supabase
-              .from('players')
-              .select('*')
-              .eq('id', playerId)
-              .single();
-            
-            // console.log('[PlayerProfile] Raw data for single player (fallback):', JSON.stringify(singlePlayerData, null, 2)); // Developer log
-
-            if (singlePlayerError && singlePlayerError.code !== 'PGRST116') { // PGRST116 means no rows found
-                console.error('Error fetching player individually:', singlePlayerError);
-                toast.error('Failed to load player profile.');
-                setPlayer(null);
-            } else if (singlePlayerData) {
-                const mappedSinglePlayer = mapFromDbData(singlePlayerData);
-                if (mappedSinglePlayer) {
-                    setPlayer({
-                        ...mappedSinglePlayer,
-                        overallRank: null, // Explicitly null as not found in ranked list
-                    });
-                } else {
-                    setPlayer(null); // mapFromDbData returned null
-                }
-            } else {
-                setPlayer(null); // Player not found even individually
-            }
-          }
-        } else {
-          toast.error('No player data available to determine rank.');
+        if (!targetPlayerData) {
+          toast.error(`Player with ID "${playerId}" not found.`);
           setPlayer(null);
+          setIsLoading(false);
+          return;
         }
+
+        // 2. თუ მოთამაშე მოიძებნა, ვიღებთ ყველა მოთამაშეს რანგის გამოსათვლელად
+        const { data: allPlayersData, error: allPlayersError } = await supabase
+          .from('players')
+          .select('id, total_points, username') 
+          .order('total_points', { ascending: false, nullsLast: true })
+          .order('username', { ascending: true });
+
+        let calculatedRank = null; 
+
+        if (allPlayersError) {
+          console.error('Error fetching all players for ranking:', allPlayersError);
+          toast.warn('Could not calculate player rank due to an error.');
+        } else if (allPlayersData) {
+          // რანკის გამოსათვლელად ვპოულობთ მოთამაშეს allPlayersData-ში ID-ის მიხედვით
+          const playerIndex = allPlayersData.findIndex(p => p.id === playerId); 
+          if (playerIndex !== -1) {
+            calculatedRank = playerIndex + 1;
+          } else {
+            // ეს შემთხვევა არ უნდა მოხდეს, თუ targetPlayerData მოიძებნა, მაგრამ ყოველი შემთხვევისთვის
+            console.warn(`Player with ID ${playerId} found individually but not in ranked list for rank calculation.`);
+          }
+        }
+        
+        const mappedPlayer = mapFromDbData(targetPlayerData);
+        if (mappedPlayer) {
+            setPlayer({
+                ...mappedPlayer,
+                overallRank: calculatedRank, 
+            });
+        } else {
+            toast.error("Failed to process player data.");
+            setPlayer(null);
+        }
+
       } catch (e) {
         console.error("Unexpected error in fetchProfileAndCalculateRank:", e);
         toast.error("An unexpected error occurred.");
@@ -164,7 +138,11 @@ const PlayerProfile = () => {
 
     fetchProfileAndCalculateRank();
 
-  }, [playerId]);
+  }, [playerId]); // useEffect დამოკიდებულია playerId-ზე
+
+  // ... (დანარჩენი JSX კოდი (isLoading, !player, player profile display) იგივე რჩება)
+  // ... (ეს ნაწილი იდენტურია თქვენს მიერ მოწოდებული PlayerProfile.tsx-ის კოდის ბოლო ვერსიისა,
+  //      მხოლოდ fetchProfileAndCalculateRank ფუნქციის ლოგიკაა შეცვლილი ID-ზე სამუშაოდ)
 
   if (isLoading) {
     return (
@@ -191,8 +169,7 @@ const PlayerProfile = () => {
 
   const getTierDisplay = (tierRating: TierRating | undefined) => {
     if (!tierRating) return 'Not Rated';
-    const tierInfo = TIER_LABELS[tierRating]; // Assuming TIER_LABELS contains English strings or is structured for it
-    // If TIER_LABELS itself needs localization, that's outside this scope, assuming it provides base English terms.
+    const tierInfo = TIER_LABELS[tierRating]; 
     return `${tierInfo.isReserve ? 'Reserve ' : ''}${tierInfo.isHigh ? 'High ' : 'Low '}Tier ${tierInfo.tierNumber}`;
   };
 
@@ -216,7 +193,7 @@ const PlayerProfile = () => {
     }
   };
 
-  return (
+ return (
     <div className="bg-[#0a0e15] text-gray-300 min-h-screen py-8">
       <div className="container mx-auto px-4">
         <Button
@@ -268,7 +245,7 @@ const PlayerProfile = () => {
                           variant="outline"
                           className="px-3 py-1.5 text-xs cursor-default border-[#ffc125]/60 text-[#ffc125]/90 hover:bg-[#ffc125]/10 transition-colors rounded-full"
                         >
-                          {badge.name} {/* Assuming badge.name is already in the desired language */}
+                          {badge.name}
                         </Badge>
                       ))}
                     </div>
@@ -285,7 +262,7 @@ const PlayerProfile = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {MINI_GAMES.map(game => { // Assuming MINI_GAMES contains game.name in the desired language
+                  {MINI_GAMES.map(game => { 
                     const tierRating = player.tiers?.[game.id as keyof Player['tiers']] as TierRating | undefined;
                     const iconUrl = miniGameIcons[game.id.toLowerCase()];
 

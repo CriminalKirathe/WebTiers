@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect /* useEffect შეიძლება არ იყოს საჭირო აქ */ } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MINI_GAMES } from '@/utils/types';
 import { Menu, X, LogOut, ShieldCheck, Search as SearchIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabaseClient'; // <<<--- დაამატეთ Supabase კლიენტის იმპორტი
 
-// SVG ფაილების იმპორტი
+// SVG ფაილების იმპორტი (უცვლელი)
 import vanillaIconUrl from '@/assets/icons/gamemodes/vanila.svg';
 import axeIconUrl from '@/assets/icons/gamemodes/axe.svg';
 import maceIconUrl from '@/assets/icons/gamemodes/mace.svg';
@@ -20,11 +21,12 @@ import smpIconUrl from '@/assets/icons/gamemodes/smp.svg';
 const Navbar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // ეს არის განსაზღვრული
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, signOut, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchingPlayer, setIsSearchingPlayer] = useState(false); // ძებნისას loading state (სურვილისამებრ)
 
   const commonLinkStyles = "rounded-md font-medium transition-colors duration-150 ease-in-out text-sm";
   const defaultTextAndHover = "text-gray-300 hover:text-[#ffc125] hover:bg-[#1f2028]";
@@ -48,7 +50,7 @@ const Navbar = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      setIsMobileMenuOpen(false); // მობილური მენიუს დახურვა
+      setIsMobileMenuOpen(false);
       navigate('/');
       toast.success("Successfully logged out.");
     } catch (error) {
@@ -61,18 +63,50 @@ const Navbar = () => {
     setSearchQuery(event.target.value);
   };
 
-  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  // ფუნქცია მოთამაშის ID-ის მოსაძებნად სახელით
+  const fetchPlayerIdByUsername = async (username: string): Promise<string | null> => {
+    if (!username) return null;
+    setIsSearchingPlayer(true);
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id') // ვიღებთ მხოლოდ ID-ს
+        .eq('username', username) // ვეძებთ username სვეტში (დარწმუნდით, რომ ეს სვეტი არსებობს)
+        .maybeSingle(); // აბრუნებს ერთ ჩანაწერს ან null-ს
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 ნიშნავს, რომ ჩანაწერი არ მოიძებნა, რაც არაა შეცდომა maybeSingle-სთვის
+        console.error('Error fetching player ID by username:', error);
+        toast.error(`Error finding player: ${error.message}`);
+        return null;
+      }
+      return data ? data.id : null;
+    } catch (e) {
+      console.error('Unexpected error fetching player ID:', e);
+      toast.error('An unexpected search error occurred.');
+      return null;
+    } finally {
+      setIsSearchingPlayer(false);
+    }
+  };
+
+  const handleSearchSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedQuery = searchQuery.trim(); // დავამატე trimmedQuery ცვლადი სიცხადისთვის
-    if (trimmedQuery) {
-      navigate(`/player/${trimmedQuery}`);
-      setSearchQuery(''); // გასუფთავება ძებნის შემდეგ
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) {
+      toast.info("Please enter a player name to search.");
+      return;
+    }
+
+    const playerId = await fetchPlayerIdByUsername(trimmedQuery);
+
+    if (playerId) {
+      navigate(`/player/${playerId}`); // ნავიგაცია ხდება მოძებნილი ID-ით
+      setSearchQuery('');
       if (isMobileMenuOpen) {
-        setIsMobileMenuOpen(false); // მობილური მენიუს დახურვა
+        setIsMobileMenuOpen(false);
       }
     } else {
-      // სურვილისამებრ: შეტყობინება, თუ საძიებო ველი ცარიელია
-      // toast.info("Please enter a player name.");
+      toast.error(`Player "${trimmedQuery}" not found.`);
     }
   };
 
@@ -102,7 +136,6 @@ const Navbar = () => {
               title={game.name}
               className={`${commonLinkStyles} ${isActive ? activeTextAndBg : defaultTextAndHover} 
                            inline-flex flex-col items-center justify-center text-center p-1 h-full w-[70px] sm:w-[80px]`}
-              onClick={() => isMobile && setIsMobileMenuOpen(false)}
             >
               <img src={iconUrl} alt={`${game.name} icon`} className="w-5 h-5 mb-0.5" />
               <span className="text-xs leading-tight mt-0.5">{game.name}</span>
@@ -142,7 +175,6 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-3"> 
-            {/* --- მოთამაშის საძიებო ველი (დესკტოპ) --- */}
             <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center relative">
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-[15px] w-[15px] text-gray-400 pointer-events-none" />
               <input
@@ -150,9 +182,11 @@ const Navbar = () => {
                 placeholder="მოთამაშის ძებნა..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="bg-[#1f2028] text-gray-300 placeholder-gray-500 text-sm rounded-md pl-9 pr-3 py-1.5 h-9 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125] focus:outline-none transition-colors duration-150 ease-in-out"
+                disabled={isSearchingPlayer} // სურვილისამებრ: ძებნისას ველი ითიშება
+                className="bg-[#1f2028] text-gray-300 placeholder-gray-500 text-sm rounded-md pl-9 pr-3 py-1.5 h-9 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125] focus:outline-none transition-colors duration-150 ease-in-out disabled:opacity-70"
                 style={{ minWidth: '160px', maxWidth: '220px' }}
               />
+              {/* თუ გინდათ ღილაკი, შეგიძლიათ დაამატოთ disabled={isSearchingPlayer} აქაც */}
             </form>
 
             {authLoading ? (
@@ -175,14 +209,15 @@ const Navbar = () => {
                 </Button>
               </>
             ) : (
-              null // Login ღილაკი ამოღებულია
+              null 
             )}
             
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 type="button"
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-[#ffc125] hover:bg-[#1f2028] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#ffc125]"
+                disabled={isSearchingPlayer}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-[#ffc125] hover:bg-[#1f2028] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#ffc125] disabled:opacity-70"
                 aria-controls="mobile-menu"
                 aria-expanded={isMobileMenuOpen}
               >
@@ -199,14 +234,14 @@ const Navbar = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {renderNavLinks(true)}
 
-            {/* --- მოთამაშის საძიებო ველი (მობილური) --- */}
             <form onSubmit={handleSearchSubmit} className="px-1 py-2">
               <input
                 type="text"
                 placeholder="მოთამაშის ძებნა..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="block w-full px-3 py-2 text-sm rounded-md bg-[#1f2028] text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#ffc125]"
+                disabled={isSearchingPlayer}
+                className="block w-full px-3 py-2 text-sm rounded-md bg-[#1f2028] text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#ffc125] disabled:opacity-70"
               />
             </form>
             
@@ -221,14 +256,14 @@ const Navbar = () => {
                     <ShieldCheck className="mr-1.5 h-4 w-4" /> Admin Panel
                   </Link>
                   <button
-                    onClick={handleSignOut} // აქაც საჭიროა setIsMobileMenuOpen(false) გამოძახება handleSignOut-ში უკვე არის
+                    onClick={handleSignOut}
                     className={`${commonLinkStyles} ${defaultTextAndHover} block w-full text-left px-3 py-2 flex items-center`}
                   >
                     <LogOut className="mr-1.5 h-4 w-4" /> Logout
                   </button>
                 </>
               ) : (
-                null // Login ღილაკი ამოღებულია მობილური მენიუდანაც
+                null 
               )}
             </div>
           </div>
