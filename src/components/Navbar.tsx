@@ -170,7 +170,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           
           <Link to="/" className="flex items-center flex-shrink-0 mr-2 navbreak:mr-4" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>
-            <span className="font-minecraft text-[#ffc125] text-lg sm:text-xl hover:opacity-80 transition-opacity">MC Tier List</span>
+            <span className="font-minecraft text-[#ffc125] text-lg sm:text-xl hover:opacity-80 transition-opacity">GeoTiers</span>
           </Link>
 
           {/* Desktop Navigation Links Container - ახლა navbreak-დან გამოჩნდება */}

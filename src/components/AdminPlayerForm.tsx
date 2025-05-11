@@ -22,15 +22,12 @@ const DEFAULT_PLAYER: Partial<Player> = {
 
 const AdminPlayerForm: React.FC<AdminPlayerFormProps> = ({ player, onSave, onCancel }) => {
   const [formData, setFormData] = useState<Partial<Player>>(player ? { ...player } : { ...DEFAULT_PLAYER });
-  const [testerName, setTesterName] = useState(player?.lastTested?.tester || '');
-  
+
   useEffect(() => {
     if (player) {
       setFormData(player);
-      setTesterName(player.lastTested?.tester || '');
     } else {
       setFormData({ ...DEFAULT_PLAYER });
-      setTesterName('');
     }
   }, [player]);
 
@@ -42,7 +39,7 @@ const AdminPlayerForm: React.FC<AdminPlayerFormProps> = ({ player, onSave, onCan
   // შესწორებული handleTierChange ფუნქცია
   const handleTierChange = (miniGameId: string, value: TierRating | string) => { // value შეიძლება იყოს "" placeholder-ის გამო
     const newTiers = { ...formData.tiers };
-    if (value === "" || value === "NOT_RATED_PLACEHOLDER") { 
+    if (value === "" || value === "NOT_RATED_PLACEHOLDER") {
       delete newTiers[miniGameId as keyof typeof formData.tiers];
     } else {
       newTiers[miniGameId as keyof Player['tiers']] = value as TierRating; // Player['tiers'] უფრო ზუსტი ტიპისთვის
@@ -55,19 +52,8 @@ const AdminPlayerForm: React.FC<AdminPlayerFormProps> = ({ player, onSave, onCan
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let updatedPlayer = { ...formData };
-
-    if (testerName.trim() !== '') {
-        updatedPlayer.lastTested = {
-        date: new Date().toISOString().split('T')[0],
-        tester: testerName
-      };
-    } else if (updatedPlayer.lastTested) {
-        delete updatedPlayer.lastTested;
-    }
-    
-    onSave(updatedPlayer);
+    // ამოშლილია lastTested-თან დაკავშირებული ლოგიკა
+    onSave(formData);
   };
 
   const tierOptions = Object.entries(TIER_LABELS).map(([value, info]) => ({
@@ -81,47 +67,38 @@ const AdminPlayerForm: React.FC<AdminPlayerFormProps> = ({ player, onSave, onCan
         <CardContent className="space-y-5 pt-6">
           <div className="space-y-1.5">
             <label htmlFor="username" className="text-sm font-medium text-gray-400">Username</label>
-            <Input 
-              id="username" 
-              name="username" 
-              value={formData.username || ''} 
-              onChange={handleChange} 
-              required 
+            <Input
+              id="username"
+              name="username"
+              value={formData.username || ''}
+              onChange={handleChange}
+              required
               className="bg-[#0a0e15] border-[#0a0e15]/80 text-gray-200 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125] placeholder-gray-500"
             />
           </div>
-          
+
           <div className="space-y-1.5">
             <label htmlFor="skinUrl" className="text-sm font-medium text-gray-400">Skin URL</label>
-            <Input 
-              id="skinUrl" 
-              name="skinUrl" 
-              value={formData.skinUrl || ''} 
-              onChange={handleChange} 
+            <Input
+              id="skinUrl"
+              name="skinUrl"
+              value={formData.skinUrl || ''}
+              onChange={handleChange}
               placeholder="MC Heads URL or direct skin URL"
               className="bg-[#0a0e15] border-[#0a0e15]/80 text-gray-200 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125] placeholder-gray-500"
             />
           </div>
-          
-          <div className="space-y-1.5">
-            <label htmlFor="tester" className="text-sm font-medium text-gray-400">Tester Name</label>
-            <Input 
-              id="tester" 
-              name="tester"
-              value={testerName} 
-              onChange={(e) => setTesterName(e.target.value)} 
-              className="bg-[#0a0e15] border-[#0a0e15]/80 text-gray-200 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125] placeholder-gray-500"
-            />
-          </div>
-          
+
+          {/* ამოშლილია Tester Name ველი */}
+
           <div className="space-y-4 pt-2">
             <h3 className="font-medium text-gray-200">Mini-game Tiers</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
               {MINI_GAMES.map((game) => (
                 <div key={game.id} className="space-y-1.5">
                   <label htmlFor={`tier-${game.id}`} className="text-sm font-medium text-gray-400">{game.name}</label>
-                  <Select 
-                    value={formData.tiers?.[game.id as keyof Player['tiers']] || ""} 
+                  <Select
+                    value={formData.tiers?.[game.id as keyof Player['tiers']] || ""}
                     onValueChange={(value) => handleTierChange(game.id, value as TierRating | "")}
                   >
                     <SelectTrigger className="w-full bg-[#0a0e15] border-[#0a0e15]/80 text-gray-200 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125]">
@@ -129,8 +106,8 @@ const AdminPlayerForm: React.FC<AdminPlayerFormProps> = ({ player, onSave, onCan
                     </SelectTrigger>
                     <SelectContent className="bg-[#1f2028] border-[#0a0e15]/80 text-gray-200">
                       {tierOptions.map((option) => (
-                        <SelectItem 
-                          key={option.value} 
+                        <SelectItem
+                          key={option.value}
                           value={option.value}
                           className="hover:bg-[#0a0e15] focus:bg-[#0a0e15]"
                         >
@@ -144,17 +121,17 @@ const AdminPlayerForm: React.FC<AdminPlayerFormProps> = ({ player, onSave, onCan
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter className="flex justify-between pt-6 border-t border-[#0a0e15]/70">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={onCancel}
             className="border-[#ffc125]/70 text-[#ffc125]/90 hover:bg-[#1f2028]/50 hover:text-[#ffc125] focus:ring-1 focus:ring-[#ffc125]"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             type="submit"
             className="bg-[#ffc125] text-[#0a0e15] font-semibold hover:bg-[#ffc125]/90 focus:ring-2 focus:ring-[#ffc125]/50 focus:ring-offset-2 focus:ring-offset-[#1f2028]"
           >
