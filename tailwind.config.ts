@@ -13,14 +13,15 @@ export default {
         container: { // ეს სექცია ეხება მხოლოდ .container კლასის მაქსიმალურ სიგანეს სხვადასხვა breakpoint-ზე
             center: true,
             padding: '2rem',
-            screens: { // ეს არ არის გლობალური breakpoint-ები
+            screens: { // ეს არ არის გლობალური breakpoint-ები .container-ისთვის
                 '2xl': '1400px'
             }
         },
         extend: { // აქ ვამატებთ ახალ გლობალურ breakpoint-ს
             screens: {
-                'navbreak': '1280px', // <<< თქვენი ახალი breakpoint-ი
-                // Tailwind-ის სტანდარტული breakpoint-ები (sm, md, lg, xl, 2xl) ავტომატურად შენარჩუნდება
+                'xs': '520px', // <<< დამატებული breakpoint-ი 520 პიქსელისთვის
+                'navbreak': '1280px', // <<< თქვენი არსებული breakpoint-ი
+                // Tailwind-ის სტანდარტული breakpoint-ები (sm, md, lg, xl, 2xl) ავტომატურად შენარჩუნდება,
                 // რადგან "screens"-ს ვამატებთ "extend" ბლოკში.
             },
             colors: {

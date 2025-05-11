@@ -40,7 +40,6 @@ const App = () => (
                 <Route path="/" element={<Overall />} />
                 <Route path="/home" element={<Index />} />
                 <Route path="/mini-game/:miniGameId" element={<MiniGame />} />
-                <Route path="/overall" element={<Overall />} />
                 <Route path="/player/:playerId" element={<PlayerProfile />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<ProtectedRoute />}>

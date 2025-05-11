@@ -32,7 +32,7 @@ const getMiniGameIcon = (gameId: string, className: string = "w-5 h-5 mr-2 inlin
 };
 
 const PointExamples = () => {
-  const exampleTiers: TierRating[] = ["ht1", "lt1", "ht2", "lt2", "ht5", "lt5", "rht1", "rlt1"];
+  const exampleTiers: TierRating[] = ["ht1", "lt1", "ht2", "lt2", "ht3", "lt3", "ht4", "lt4", "ht5", "lt5"];
   const pointsToShow = exampleTiers.filter(tier => TIER_POINTS[tier] !== undefined);
 
   return (

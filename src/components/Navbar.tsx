@@ -108,9 +108,9 @@ const Navbar = () => {
   const renderNavLinks = (isMobile = false) => (
     <>
       <Link
-        to="/overall"
+        to="/"
         title="Overall Rankings"
-        className={`${commonLinkStyles} ${currentPath === '/overall' ? activeTextAndBg : defaultTextAndHover} 
+        className={`${commonLinkStyles} ${currentPath === '/' ? activeTextAndBg : defaultTextAndHover} 
                   ${isMobile 
                     ? 'flex items-center w-full text-left px-3 py-2' 
                     // აქ `lg:` და `xl:` პრეფიქსები რჩება, რადგან ისინი განსაზღვრავენ დესკტოპის ვერსიის შიდა სტილებს,
@@ -171,7 +171,7 @@ const Navbar = () => {
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex items-center justify-between h-16">
           
-          <Link to="/" className="flex items-center flex-shrink-0 mr-2 navbreak:mr-4" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>
+          <Link to="/home" className="flex items-center flex-shrink-0 mr-2 navbreak:mr-4" onClick={() => isMobileMenuOpen && setIsMobileMenuOpen(false)}>
             <span className="font-minecraft text-[#ffc125] text-lg sm:text-xl hover:opacity-80 transition-opacity">GeoTiers</span>
           </Link>
 

@@ -74,7 +74,6 @@ export const TIER_LABELS: Record<TierRating, {
   display: string;
   tierNumber: 1 | 2 | 3 | 4 | 5;
   isHigh: boolean;
-  isReserve?: boolean;
 }> = {
   ht1: { display: "High Tier 1", tierNumber: 1, isHigh: true },
   lt1: { display: "Low Tier 1", tierNumber: 1, isHigh: false },
