@@ -117,14 +117,7 @@ const Index = () => {
                 className="bg-[#1f2028] hover:bg-[#ffc125] hover:text-[#0a0e15] text-[#ffc125]/90 font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 border border-[#ffc125]/50 flex items-center group"
               >
                 <MessageSquareText className="w-5 h-5 mr-2 group-hover:text-[#0a0e15] transition-colors" /> 
-                Join our Discord
-              </a>
-              <a 
-                href="mailto:shakarishviliofficial@gmail.com" // <<--- შეცვალეთ თქვენი იმეილით
-                className="bg-[#1f2028] hover:bg-[#ffc125] hover:text-[#0a0e15] text-[#ffc125]/90 font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 border border-[#ffc125]/50 flex items-center group"
-              >
-                <Mail className="w-5 h-5 mr-2 group-hover:text-[#0a0e15] transition-colors" />
-                Email Us
+                Discord
               </a>
             </div>
           </div>

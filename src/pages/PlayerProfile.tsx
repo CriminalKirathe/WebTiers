@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { useParams, useNavigate } from 'react-router-dom';
 import { Player, MINI_GAMES, TIER_LABELS, TierRating } from '@/utils/types';
 import { Button } from '@/components/ui/button';
@@ -53,98 +53,206 @@ const miniGameIcons: Record<string, string> = {
 };
 
 const PlayerProfile = () => {
-  const { playerId } = useParams<{ playerId: string }>(); // <<<--- ვიღებთ playerId-ს (UUID-ს) URL-დან
+  const { playerId } = useParams<{ playerId: string }>();
   const navigate = useNavigate();
   const [player, setPlayer] = useState<Player | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitiallyLoading, setIsInitiallyLoading] = useState(true); // For initial load
 
-  useEffect(() => {
-    if (!playerId) { // ვამოწმებთ playerId-ს და არა playerName-ს
-      setIsLoading(false);
+  const fetchProfileAndCalculateRank = useCallback(async (isInitialCall = false) => {
+    if (!playerId) {
+      if (isInitialCall) setIsInitiallyLoading(false);
       setPlayer(null);
-      toast.error("Player ID is missing from URL.");
+      // toast.error might be too frequent if playerId is persistently missing
+      // Consider logging or a one-time error display if playerId prop itself is problematic
       return;
     }
 
-    const fetchProfileAndCalculateRank = async () => {
-      setIsLoading(true);
-      setPlayer(null);
+    if (isInitialCall) {
+      setIsInitiallyLoading(true);
+    }
+    // For polling, we don't set a global loading unless no player data is present at all
+    // if (!player && !isInitialCall) setIsLoading(true); // Or a more subtle loading state
 
-      try {
-        // 1. ვამოწმებთ, არსებობს თუ არა მოთამაშე ამ ID-ით
-        const { data: targetPlayerData, error: targetPlayerError } = await supabase
-          .from('players')
-          .select('*')
-          .eq('id', playerId) // <<<--- ვეძებთ ID სვეტით
-          .maybeSingle(); 
+    // console.log(`PlayerProfile: Fetching data for ID ${playerId}. Initial: ${isInitialCall}`);
 
-        if (targetPlayerError && targetPlayerError.code !== 'PGRST116') {
-          console.error(`Error fetching player by ID (${playerId}):`, targetPlayerError);
-          toast.error('Failed to load player profile.');
-          setPlayer(null);
-          setIsLoading(false);
-          return;
-        }
+    try {
+      const { data: targetPlayerData, error: targetPlayerError } = await supabase
+        .from('players')
+        .select('*')
+        .eq('id', playerId)
+        .maybeSingle();
 
-        if (!targetPlayerData) {
-          toast.error(`Player with ID "${playerId}" not found.`);
-          setPlayer(null);
-          setIsLoading(false);
-          return;
-        }
-
-        // 2. თუ მოთამაშე მოიძებნა, ვიღებთ ყველა მოთამაშეს რანგის გამოსათვლელად
-        const { data: allPlayersData, error: allPlayersError } = await supabase
-          .from('players')
-          .select('id, total_points, username') 
-          .order('total_points', { ascending: false, nullsLast: true })
-          .order('username', { ascending: true });
-
-        let calculatedRank = null; 
-
-        if (allPlayersError) {
-          console.error('Error fetching all players for ranking:', allPlayersError);
-          toast.warn('Could not calculate player rank due to an error.');
-        } else if (allPlayersData) {
-          // რანკის გამოსათვლელად ვპოულობთ მოთამაშეს allPlayersData-ში ID-ის მიხედვით
-          const playerIndex = allPlayersData.findIndex(p => p.id === playerId); 
-          if (playerIndex !== -1) {
-            calculatedRank = playerIndex + 1;
-          } else {
-            // ეს შემთხვევა არ უნდა მოხდეს, თუ targetPlayerData მოიძებნა, მაგრამ ყოველი შემთხვევისთვის
-            console.warn(`Player with ID ${playerId} found individually but not in ranked list for rank calculation.`);
-          }
-        }
-        
-        const mappedPlayer = mapFromDbData(targetPlayerData);
-        if (mappedPlayer) {
-            setPlayer({
-                ...mappedPlayer,
-                overallRank: calculatedRank, 
-            });
-        } else {
-            toast.error("Failed to process player data.");
-            setPlayer(null);
-        }
-
-      } catch (e) {
-        console.error("Unexpected error in fetchProfileAndCalculateRank:", e);
-        toast.error("An unexpected error occurred.");
-        setPlayer(null);
-      } finally {
-        setIsLoading(false);
+      if (targetPlayerError && targetPlayerError.code !== 'PGRST116') {
+        console.error(`PlayerProfile: Error fetching player by ID (${playerId}):`, targetPlayerError);
+        if (isInitialCall) toast.error('Failed to load player profile.');
+        if (isInitialCall) setPlayer(null); // Clear only on initial load error
+        if (isInitialCall) setIsInitiallyLoading(false);
+        return;
       }
+
+      if (!targetPlayerData) {
+        if (isInitialCall) toast.error(`Player with ID "${playerId}" not found.`);
+        setPlayer(null); // Player not found, clear state
+        if (isInitialCall) setIsInitiallyLoading(false);
+        return;
+      }
+
+      const { data: allPlayersData, error: allPlayersError } = await supabase
+        .from('players')
+        .select('id, total_points, username')
+        .order('total_points', { ascending: false, nullsLast: true })
+        .order('username', { ascending: true });
+
+      let calculatedRank = null;
+      if (allPlayersError) {
+        console.error('PlayerProfile: Error fetching all players for ranking:', allPlayersError);
+        if (isInitialCall || !player) { // Show warning if initial or if player data was lost
+            toast.warn('Could not calculate player rank due to an error.');
+        }
+      } else if (allPlayersData) {
+        const playerIndex = allPlayersData.findIndex(p => p.id === playerId);
+        if (playerIndex !== -1) {
+          calculatedRank = playerIndex + 1;
+        } else if (isInitialCall) {
+            // This case (player found individually but not in ranked list) might warrant a specific log/toast
+            // console.warn(`PlayerProfile: Player with ID ${playerId} not found in ranked list for rank calculation during initial load.`);
+        }
+      }
+      
+      const mappedPlayer = mapFromDbData(targetPlayerData);
+      if (mappedPlayer) {
+        // To ensure React detects changes, especially if only sub-properties of player object change:
+        setPlayer(prevPlayer => {
+            const newPlayerData = {
+                ...mappedPlayer,
+                overallRank: calculatedRank,
+            };
+            // Basic check to see if significant data has changed to avoid unnecessary re-renders
+            // This is a shallow comparison, for complex objects a deep comparison or library might be needed
+            if (JSON.stringify(prevPlayer) !== JSON.stringify(newPlayerData)) {
+                // console.log("PlayerProfile: Player data updated.", newPlayerData);
+                return newPlayerData;
+            }
+            return prevPlayer; // No change, return previous state
+        });
+      } else {
+        if (isInitialCall) toast.error("Failed to process player data.");
+        if (isInitialCall) setPlayer(null);
+      }
+
+    } catch (e) {
+      console.error("PlayerProfile: Unexpected error in fetchProfileAndCalculateRank:", e);
+      if (isInitialCall) toast.error("An unexpected error occurred.");
+      if (isInitialCall) setPlayer(null);
+    } finally {
+      if (isInitialCall) {
+        setIsInitiallyLoading(false);
+      }
+    }
+  }, [playerId, player]); // Added 'player' to dependencies of useCallback to re-evaluate if prevPlayer logic is used.
+                         // However, for polling, fetchProfileAndCalculateRank should ideally not depend on 'player' state
+                         // to avoid potential loops if not careful.
+                         // Let's remove 'player' and rely on setPlayer triggering re-renders if data actually changes.
+                         // The JSON.stringify comparison in setPlayer also helps.
+
+  // Corrected useCallback dependencies:
+  // const fetchProfileAndCalculateRank = useCallback(async (isInitialCall = false) => { ... }, [playerId]);
+
+
+  // Re-defining fetchProfileAndCalculateRank with stable dependencies for polling
+   const stableFetchProfileAndCalculateRank = useCallback(async (isInitialCall = false) => {
+    if (!playerId) {
+      if (isInitialCall) setIsInitiallyLoading(false);
+      setPlayer(null);
+      return;
+    }
+
+    if (isInitialCall) {
+      setIsInitiallyLoading(true);
+    }
+    
+    try {
+      const { data: targetPlayerData, error: targetPlayerError } = await supabase
+        .from('players')
+        .select('*')
+        .eq('id', playerId) 
+        .maybeSingle(); 
+
+      if (targetPlayerError && targetPlayerError.code !== 'PGRST116') {
+        console.error(`PlayerProfile: Error fetching player by ID (${playerId}):`, targetPlayerError);
+        if (isInitialCall) { toast.error('Failed to load player profile.'); setPlayer(null); }
+        if (isInitialCall) setIsInitiallyLoading(false);
+        return;
+      }
+
+      if (!targetPlayerData) {
+        if (isInitialCall) { toast.error(`Player with ID "${playerId}" not found.`); setPlayer(null); }
+        if (isInitialCall) setIsInitiallyLoading(false);
+        return;
+      }
+
+      const { data: allPlayersData, error: allPlayersError } = await supabase
+        .from('players')
+        .select('id, total_points, username') 
+        .order('total_points', { ascending: false, nullsLast: true })
+        .order('username', { ascending: true });
+
+      let calculatedRank = null; 
+      if (allPlayersError) {
+        console.error('PlayerProfile: Error fetching all players for ranking:', allPlayersError);
+        // Avoid repeated toasts on polling if rank calculation fails but player data is available
+        if (isInitialCall) toast.warn('Could not calculate player rank.');
+      } else if (allPlayersData) {
+        const playerIndex = allPlayersData.findIndex(p => p.id === playerId); 
+        if (playerIndex !== -1) {
+          calculatedRank = playerIndex + 1;
+        }
+      }
+      
+      const mappedPlayer = mapFromDbData(targetPlayerData);
+      if (mappedPlayer) {
+          setPlayer({ // This will always create a new object reference if data changed or not.
+                      // React should pick this up for re-render if values differ.
+              ...mappedPlayer,
+              overallRank: calculatedRank, 
+          });
+      } else {
+          if (isInitialCall) { toast.error("Failed to process player data."); setPlayer(null); }
+      }
+
+    } catch (e) {
+      console.error("PlayerProfile: Unexpected error in fetchProfileAndCalculateRank:", e);
+      if (isInitialCall) { toast.error("An unexpected error occurred."); setPlayer(null); }
+    } finally {
+      if (isInitialCall) {
+        setIsInitiallyLoading(false);
+      }
+    }
+  }, [playerId]); // useCallback depends only on playerId
+
+  useEffect(() => {
+    if (!playerId) {
+      setIsInitiallyLoading(false); // Ensure loading stops if no ID
+      setPlayer(null);
+      toast.error("Player ID is missing from URL."); // This toast implies playerId was expected but missing
+      return;
+    }
+
+    stableFetchProfileAndCalculateRank(true); // Initial fetch
+
+    const intervalId = setInterval(() => {
+      // console.log(`PlayerProfile: Polling for player ID ${playerId} - ${new Date().toLocaleTimeString()}`);
+      stableFetchProfileAndCalculateRank(false); // Polling fetch
+    }, 5000); // 5 seconds
+
+    return () => {
+      // console.log(`PlayerProfile: Clearing polling interval for player ID ${playerId}.`);
+      clearInterval(intervalId);
     };
+  }, [playerId, stableFetchProfileAndCalculateRank]);
 
-    fetchProfileAndCalculateRank();
 
-  }, [playerId]); // useEffect დამოკიდებულია playerId-ზე
-
-  // ... (დანარჩენი JSX კოდი (isLoading, !player, player profile display) იგივე რჩება)
-  // ... (ეს ნაწილი იდენტურია თქვენს მიერ მოწოდებული PlayerProfile.tsx-ის კოდის ბოლო ვერსიისა,
-  //      მხოლოდ fetchProfileAndCalculateRank ფუნქციის ლოგიკაა შეცვლილი ID-ზე სამუშაოდ)
-
-  if (isLoading) {
+  if (isInitiallyLoading) {
     return (
       <div className="bg-[#0a0e15] text-gray-300 min-h-screen flex items-center justify-center p-4">
         <p className="text-xl text-[#ffc125] font-minecraft animate-pulse">Loading player profile...</p>
@@ -222,7 +330,7 @@ const PlayerProfile = () => {
                   <div className="text-xl font-semibold text-[#ffc125]/90">
                     Overall #{player.overallRank !== null && player.overallRank !== 0 && player.overallRank !== undefined ? player.overallRank : 'N/A'}
                   </div>
-                  <div className="text-lg font-bold text-[#ffc125]">{player.totalPoints || 0} Points</div>
+                  <div className="text-lg font-bold text-[#ffc125]">{player.totalPoints || 0} Points</div> {/* ქულების ჩვენება */}
                 </div>
 
                 {player.lastTested && (
