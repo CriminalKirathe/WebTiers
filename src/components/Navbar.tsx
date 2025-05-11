@@ -12,7 +12,7 @@ import vanillaIconUrl from '@/assets/icons/gamemodes/vanila.svg';
 import axeIconUrl from '@/assets/icons/gamemodes/axe.svg';
 import maceIconUrl from '@/assets/icons/gamemodes/mace.svg';
 import netheriteIconUrl from '@/assets/icons/gamemodes/netherite.svg';
-import overallIconUrl from '@/assets/overall.svg';
+import overallIconUrl from '@/assets/icons/overall.svg';
 import potIconUrl from '@/assets/icons/gamemodes/pot.svg';
 import uhcIconUrl from '@/assets/icons/gamemodes/uhc.svg';
 import swordIconUrl from '@/assets/icons/gamemodes/sword.svg';
