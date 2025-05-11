@@ -333,16 +333,6 @@ const PlayerProfile = () => {
                   <div className="text-lg font-bold text-[#ffc125]">{player.totalPoints || 0} Points</div> {/* ქულების ჩვენება */}
                 </div>
 
-                {player.lastTested && (
-                  <div className="border-t border-gray-700/70 pt-4 mt-4">
-                    <h3 className="text-xs font-semibold uppercase text-gray-400 mb-2 text-center tracking-wider">Activity</h3>
-                    <div className="text-center text-sm text-gray-400 space-y-0.5">
-                      <div>Last tested: {player.lastTested.date}</div>
-                      <div>Tester: {player.lastTested.tester}</div>
-                    </div>
-                  </div>
-                )}
-
                 {player.badges && player.badges.length > 0 && (
                   <div className="border-t border-gray-700/70 pt-4 mt-4">
                     <h3 className="text-xs font-semibold uppercase text-gray-400 mb-3 text-center tracking-wider">Achievements</h3>
