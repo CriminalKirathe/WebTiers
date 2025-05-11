@@ -37,7 +37,8 @@ const App = () => (
             <Navbar />
             <main className="flex-grow pt-16"> {/* Navbar-ის სიმაღლის (h-16) კომპენსაცია */}
               <Routes> {/* Routes იყენებს მშობელი BrowserRouter-ის კონტექსტს */}
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Overall />} />
+                <Route path="/home" element={<Index />} />
                 <Route path="/mini-game/:miniGameId" element={<MiniGame />} />
                 <Route path="/overall" element={<Overall />} />
                 <Route path="/player/:playerId" element={<PlayerProfile />} />

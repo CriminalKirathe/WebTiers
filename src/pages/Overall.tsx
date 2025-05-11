@@ -15,6 +15,7 @@ import netheriteIconSrc from '@/assets/icons/gamemodes/netherite.svg'; // გა
 import potIconSrc from '@/assets/icons/gamemodes/pot.svg'; // განვიხილოთ გზა
 import uhcIconSrc from '@/assets/icons/gamemodes/uhc.svg'; // განვიხილოთ გზა
 import swordIconSrc from '@/assets/icons/gamemodes/sword.svg'; // განვიხილოთ გზა
+import elytraIconSrc from '@/assets/icons/gamemodes/elytra.webp';
 
 const gameModeIconSources: { [key: string]: string } = {
   vanilla: vanillaIconSrc,
@@ -25,6 +26,7 @@ const gameModeIconSources: { [key: string]: string } = {
   potpvp: potIconSrc,
   uhc: uhcIconSrc,
   sword: swordIconSrc,
+  elytra: elytraIconSrc,
 };
 
 const mapFromDbData = (dbData: any): Player => {

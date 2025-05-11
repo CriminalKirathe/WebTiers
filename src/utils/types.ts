@@ -44,16 +44,12 @@ export const TIER_POINTS: Record<TierRating, number> = {
   ht5: 2,
   lt4: 3,
   ht4: 4,
-  lt3: 5,
-  ht3: 6,
-  lt2: 7,
-  ht2: 8,
-  lt1: 9,
-  ht1: 10,
-  rlt2: 7, // გაითვალისწინეთ, რომ rlt2/rht2 და rlt1/rht1 იგივე ქულებს იძლევიან, რაც lt2/ht2 და lt1/ht1. ეს შეიძლება გამიზნული იყოს.
-  rht2: 8,
-  rlt1: 9,
-  rht1: 10,
+  lt3: 6,
+  ht3: 10,
+  lt2: 20,
+  ht2: 30,
+  lt1: 45,
+  ht1: 60,
 };
 
 // MINI_GAMES ობიექტის ტიპი განახლებულია discordLink-ის დასამატებლად
@@ -90,8 +86,4 @@ export const TIER_LABELS: Record<TierRating, {
   lt4: { display: "Low Tier 4", tierNumber: 4, isHigh: false },
   ht5: { display: "High Tier 5", tierNumber: 5, isHigh: true },
   lt5: { display: "Low Tier 5", tierNumber: 5, isHigh: false },
-  rht1: { display: "Reserve High Tier 1", tierNumber: 1, isHigh: true, isReserve: true },
-  rlt1: { display: "Reserve Low Tier 1", tierNumber: 1, isHigh: false, isReserve: true },
-  rht2: { display: "Reserve High Tier 2", tierNumber: 2, isHigh: true, isReserve: true },
-  rlt2: { display: "Reserve Low Tier 2", tierNumber: 2, isHigh: false, isReserve: true },
 };

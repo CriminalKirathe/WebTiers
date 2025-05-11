@@ -17,6 +17,7 @@ import potIconUrl from '@/assets/icons/gamemodes/pot.svg';
 import uhcIconUrl from '@/assets/icons/gamemodes/uhc.svg';
 import swordIconUrl from '@/assets/icons/gamemodes/sword.svg';
 import smpIconUrl from '@/assets/icons/gamemodes/smp.svg';
+import elytraIconUrl from '@/assets/icons/gamemodes/elytra.webp';
 
 const mapFromDbData = (dbData: any): Player | null => {
   if (!dbData) { return null; }
@@ -50,6 +51,7 @@ const miniGameIcons: Record<string, string> = {
   uhc: uhcIconUrl,
   sword: swordIconUrl,
   smp: smpIconUrl,
+  elytra: elytraIconUrl,
 };
 
 const PlayerProfile = () => {
