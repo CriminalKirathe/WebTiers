@@ -7,15 +7,15 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 // SVG ფაილების იმპორტი
-import vanillaIconUrl from '@/assets/vanila.svg';
-import axeIconUrl from '@/assets/axe.svg';
-import maceIconUrl from '@/assets/mace.svg';
-import netheriteIconUrl from '@/assets/netherite.svg';
+import vanillaIconUrl from '@/assets/icons/gamemodes/vanila.svg';
+import axeIconUrl from '@/assets/icons/gamemodes/axe.svg';
+import maceIconUrl from '@/assets/icons/gamemodes/mace.svg';
+import netheriteIconUrl from '@/assets/icons/gamemodes/netherite.svg';
 import overallIconUrl from '@/assets/overall.svg';
-import potIconUrl from '@/assets/pot.svg';
-import uhcIconUrl from '@/assets/uhc.svg';
-import swordIconUrl from '@/assets/sword.svg';
-import smpIconUrl from '@/assets/smp.svg'; // <--- დაემატა SMP იკონის იმპორტი
+import potIconUrl from '@/assets/icons/gamemodes/pot.svg';
+import uhcIconUrl from '@/assets/icons/gamemodes/uhc.svg';
+import swordIconUrl from '@/assets/icons/gamemodes/sword.svg';
+import smpIconUrl from '@/assets/icons/gamemodes/smp.svg'; // <--- დაემატა SMP იკონის იმპორტი
 
 const Navbar = () => {
   const location = useLocation();
