@@ -58,7 +58,8 @@ const TierList: React.FC<TierListProps> = ({ players, miniGameType }) => {
   });
 
   return (
-    <div className="flex gap-2 sm:gap-3 lg:gap-4 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 px-2 sm:px-3 lg:px-0">
+    // --- აქ დაემატა items-start კლასი ---
+    <div className="flex items-start gap-2 sm:gap-3 lg:gap-4 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 px-2 sm:px-3 lg:px-0">
       {TIERS_TO_DISPLAY.map(tierNumber => {
         const tierGroup = playersByTier[tierNumber] || { high: [], low: [], reserveHigh: [], reserveLow: [] };
         const allPlayersInTierWithSubTier: { player: Player, subTier: SubTierType }[] = [
@@ -76,22 +77,18 @@ const TierList: React.FC<TierListProps> = ({ players, miniGameType }) => {
           <div
             key={tierNumber}
             className={`tier-column ${tierStyle.bgColor} rounded-lg shadow-xl dark:shadow-[0_8px_20px_rgba(255,193,37,0.07)]
-                        flex flex-col
-                        w-[249px] h-[188px] flex-shrink-0
-                        lg:w-auto lg:min-w-0 lg:flex-1
-                        lg:h-auto lg:max-h-[75vh]
-                        border border-transparent hover:border-[#ffc125]/30 transition-all`}
+                          flex flex-col
+                          w-[249px] flex-shrink-0
+                          lg:w-auto lg:min-w-0 lg:flex-1
+                          border border-transparent hover:border-[#ffc125]/30 transition-all`}
           >
             <div className={`tier-header ${tierStyle.headerColor} ${tierStyle.textColor} p-3 rounded-t-lg text-lg font-bold text-center sticky top-0 z-10`}>
               {tierStyle.label}
             </div>
             <div className={`players-in-tier-content
-                             p-2 sm:p-3 space-y-1 sm:space-y-1.5
-                             overflow-y-auto flex-grow
-                             scrollbar-none /* Firefox-ისთვის */
-                             [-ms-overflow-style:none] /* IE და Edge (ძველი ვერსიები) */
-                             [&::-webkit-scrollbar]:hidden /* Chrome, Safari, Opera და ახალი Edge */
-                           `}>
+                              p-2 sm:p-3 space-y-1 sm:space-y-1.5
+                              flex-grow 
+                            `}>
               {allPlayersInTierWithSubTier.length > 0 ? (
                 allPlayersInTierWithSubTier.map(item => (
                   <PlayerCard
