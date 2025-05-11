@@ -1,37 +1,36 @@
+// ფაილი: @/utils/types.ts (ან თქვენი ფაილის შესაბამისი სახელი)
 
 export interface Player {
   id: string;
   username: string;
-  skinUrl: string;
-  overallRank: number;
+  skinUrl: string; // დარწმუნდით, რომ ეს ყოველთვის არის, ან გააკეთეთ string | undefined
+  overallRank: number; // დარწმუნდით, რომ ეს ყოველთვის არის, ან number | undefined
   totalPoints: number;
   badges: Badge[];
-  lastTested?: {
-    date: string;
-    tester: string;
-  };
   tiers: {
-    [key in MiniGameType]?: TierRating;
+    [key in MiniGameType]?: TierRating; // იყენებს განახლებულ MiniGameType-ს
   };
 }
 
-export type MiniGameType = 
+// MiniGameType სტანდარტიზებულია პატარა ასოებზე (lowercase)
+export type MiniGameType =
   | "vanilla"
-  | "UHC" 
-  | "potPvp" 
-  | "netherite" 
-  | "smp" 
-  | "sword" 
-  | "axe" 
-  | "mace";
+  | "uhc"
+  | "potpvp"
+  | "netherite"
+  | "smp"
+  | "sword"
+  | "axe"
+  | "mace"
+  | "elytra";
 
-export type TierRating = 
-  | "lt5" | "ht5" 
-  | "lt4" | "ht4" 
-  | "lt3" | "ht3" 
-  | "lt2" | "ht2" 
+export type TierRating =
+  | "lt5" | "ht5"
+  | "lt4" | "ht4"
+  | "lt3" | "ht3"
+  | "lt2" | "ht2"
   | "lt1" | "ht1"
-  | "rlt2" | "rht2" 
+  | "rlt2" | "rht2"
   | "rlt1" | "rht1";
 
 export interface Badge {
@@ -51,21 +50,28 @@ export const TIER_POINTS: Record<TierRating, number> = {
   ht2: 8,
   lt1: 9,
   ht1: 10,
-  rlt2: 7,
+  rlt2: 7, // გაითვალისწინეთ, რომ rlt2/rht2 და rlt1/rht1 იგივე ქულებს იძლევიან, რაც lt2/ht2 და lt1/ht1. ეს შეიძლება გამიზნული იყოს.
   rht2: 8,
   rlt1: 9,
   rht1: 10,
 };
 
-export const MINI_GAMES: {id: MiniGameType, name: string}[] = [
-  { id: "vanilla", name: "Vanilla" },
-  { id: "UHC", name: "UHC" },
-  { id: "potPvp", name: "Pot PvP" },
-  { id: "netherite", name: "Netherite" },
-  { id: "smp", name: "SMP" },
-  { id: "sword", name: "Sword" },
-  { id: "axe", name: "Axe" },
-  { id: "mace", name: "Mace" }
+// MINI_GAMES ობიექტის ტიპი განახლებულია discordLink-ის დასამატებლად
+// id-ები შეესაბამება განახლებულ MiniGameType-ს (ყველა პატარა ასოთი)
+export const MINI_GAMES: {
+  id: MiniGameType;
+  name: string;
+  discordLink?: string; // <<-- დამატებულია discordLink (არასავალდებულო)
+}[] = [
+  { id: "vanilla", name: "Vanilla", discordLink: "https://discord.gg/sZmWtA5U6G" },
+  { id: "uhc", name: "UHC", discordLink: "https://discord.gg/PgfskTrWKG" }, // id შეიცვალა "uhc"-ზე
+  { id: "potpvp", name: "Pot PvP", discordLink: "https://discord.gg/WyEs2xWkJY" }, // id შეიცვალა "potpvp"-ზე
+  { id: "netherite", name: "Netherite", discordLink: "https://discord.gg/ubrV4u6VVw" },
+  { id: "smp", name: "SMP", discordLink: "https://discord.gg/UWcuuydrsv" },
+  { id: "sword", name: "Sword", discordLink: "https://discord.gg/kB3HfKpYbR" },
+  { id: "axe", name: "Axe", discordLink: "https://discord.gg/5wvQYu3WVF" },
+  { id: "mace", name: "Mace", discordLink: "https://discord.gg/GDaDnFrc7k" },
+  { id: "elytra", name: "Elytra", discordLink: "https://discord.gg/sH8D3Uppph" }
 ];
 
 export const TIER_LABELS: Record<TierRating, {

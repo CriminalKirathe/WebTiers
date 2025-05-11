@@ -17,6 +17,7 @@ import potIconUrl from '@/assets/icons/gamemodes/pot.svg';
 import uhcIconUrl from '@/assets/icons/gamemodes/uhc.svg';
 import swordIconUrl from '@/assets/icons/gamemodes/sword.svg';
 import smpIconUrl from '@/assets/icons/gamemodes/smp.svg';
+import elytraIconUrl from '@/assets/icons/gamemodes/elytra.webp'
 
 const Navbar = () => {
   const location = useLocation();
@@ -41,6 +42,7 @@ const Navbar = () => {
     uhc: uhcIconUrl,
     sword: swordIconUrl,
     smp: smpIconUrl,
+    elytra: elytraIconUrl,
   };
 
   const handleSignOut = async () => {
