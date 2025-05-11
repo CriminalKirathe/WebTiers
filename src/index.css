@@ -1,0 +1,146 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.cdnfonts.com/css/minecraft-4');
+
+@layer base {
+  :root {
+    --background: 120 10% 95%;
+    --foreground: 20 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 10% 10%;
+
+    --primary: 120 40% 30%;
+    --primary-foreground: 120 10% 95%;
+
+    --secondary: 30 40% 60%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 120 5% 85%;
+    --muted-foreground: 20 10% 40%;
+
+    --accent: 200 80% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 20 10% 80%;
+    --input: 20 10% 80%;
+    --ring: 120 40% 30%;
+
+    --radius: 0.25rem;
+  }
+
+  .dark {
+    --background: 20 10% 10%;
+    --foreground: 120 10% 95%;
+
+    --card: 20 10% 15%;
+    --card-foreground: 120 10% 95%;
+
+    --popover: 20 10% 15%;
+    --popover-foreground: 120 10% 95%;
+
+    --primary: 120 40% 30%;
+    --primary-foreground: 120 10% 95%;
+
+    --secondary: 30 40% 30%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 20 10% 20%;
+    --muted-foreground: 120 10% 70%;
+
+    --accent: 200 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 20 10% 30%;
+    --input: 20 10% 30%;
+    --ring: 120 40% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-minecraft;
+  }
+}
+
+@layer components {
+  .minecraft-button {
+    @apply inline-flex items-center justify-center rounded px-4 py-2 text-sm font-medium focus-visible:outline-none 
+    focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+    border-b-4 active:border-b-0 active:mt-1 transition-all duration-100
+    bg-minecraft-stone text-white border-gray-700;
+  }
+
+  .tier-list-container {
+    @apply grid grid-cols-5 gap-2 mb-4;
+  }
+
+  .tier-row {
+    @apply flex flex-col border rounded-md p-2 min-h-40;
+  }
+
+  .tier-header {
+    @apply text-center font-minecraft text-lg mb-2 py-1 rounded;
+  }
+
+  .tier-1 {
+    @apply bg-tier-1/20 border-tier-1;
+  }
+  
+  .tier-1-header {
+    @apply bg-tier-1 text-white;
+  }
+  
+  .tier-2 {
+    @apply bg-tier-2/20 border-tier-2;
+  }
+  
+  .tier-2-header {
+    @apply bg-tier-2 text-white;
+  }
+  
+  .tier-3 {
+    @apply bg-tier-3/20 border-tier-3;
+  }
+  
+  .tier-3-header {
+    @apply bg-tier-3 text-black;
+  }
+  
+  .tier-4 {
+    @apply bg-tier-4/20 border-tier-4;
+  }
+  
+  .tier-4-header {
+    @apply bg-tier-4 text-black;
+  }
+  
+  .tier-5 {
+    @apply bg-tier-5/20 border-tier-5;
+  }
+  
+  .tier-5-header {
+    @apply bg-tier-5 text-black;
+  }
+}
