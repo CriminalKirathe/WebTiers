@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Player, MINI_GAMES } from '@/utils/types'; // Assuming MINI_GAMES contains {id: string, name: string} objects
-import { Badge } from '@/components/ui/badge';
+import { Player, MINI_GAMES } from '@/utils/types';
 import { Trophy, ListX, Users2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 
-// Import SVG icons - adjust paths if your SVGs are located elsewhere
-// For example, if they are in 'src/assets/icons/gamemodes/' and '@' is 'src/'
 import axeIconSrc from '@/assets/icons/gamemodes/axe.svg';
 import vanillaIconSrc from '@/assets/icons/gamemodes/vanila.svg';
 import smpIconSrc from '@/assets/icons/gamemodes/smp.svg';
@@ -16,23 +13,16 @@ import netheriteIconSrc from '../assets/icons/gamemodes/netherite.svg';
 import potIconSrc from '../assets/icons/gamemodes/pot.svg';
 import uhcIconSrc from '../assets/icons/gamemodes/uhc.svg';
 import swordIconSrc from '../assets/icons/gamemodes/sword.svg';
-// If 'overall.svg' is also a game mode icon, import it too:
-// import overallIconSrc from '@/assets/icons/gamemodes/overall.svg';
 
-// Mapping from game mode ID to SVG icon source
-// Ensure the keys ('axe', 'mace', etc.) match the `gameId` values
-// used in your `player.tiers` object and `MINI_GAMES` configuration.
 const gameModeIconSources: { [key: string]: string } = {
   vanilla: vanillaIconSrc,
   smp: smpIconSrc,
   axe: axeIconSrc,
   mace: maceIconSrc,
   netherite: netheriteIconSrc,
-  pot: potIconSrc, // Assuming 'pot' is the ID for "Pot PVP Gamemode"
+  potpvp: potIconSrc,
   uhc: uhcIconSrc,
   sword: swordIconSrc,
-  // If 'overall' is a game mode ID that can appear in player.tiers:
-  // overall: overallIconSrc,
 };
 
 const mapFromDbData = (dbData: any): Player => {
@@ -176,22 +166,29 @@ const Overall = () => {
             <div className="grid grid-cols-12 gap-2 sm:gap-3 items-center text-xs font-semibold text-gray-300 dark:text-gray-400 uppercase tracking-wider">
               <div className="col-span-1 text-center">#</div>
               <div className="col-span-6 sm:col-span-5 pl-1">Player</div>
-              <div className="col-span-5 sm:col-span-6 text-right pr-2">Mini-games Played</div>
+              <div className="col-span-5 sm:col-span-6 text-right pr-2">Mini-games</div>
             </div>
           </div>
 
           <div className="player-list-container">
             {players.length > 0 ? (
               players.map((player, index) => {
-                // MODIFIED: Prepare playerGames to include gameId for icon mapping
-                const playerGames = Object.entries(player.tiers || {})
-                  .filter(([_, tier]) => tier) // Consider only games where player has a tier/is active
-                  .map(([gameId, _]) => {
-                    const gameConfig = MINI_GAMES.find(g => g.id === gameId);
+                const allGameModeDetails = MINI_GAMES
+                  .map((gameConfig, originalIndex) => {
+                    const playerTierForThisGame = player.tiers?.[gameConfig.id];
                     return {
-                      id: gameId, // Crucial for icon mapping
-                      name: gameConfig?.name || gameId, // Fallback to gameId if name not in MINI_GAMES
+                      id: gameConfig.id,
+                      name: gameConfig.name || gameConfig.id,
+                      tier: playerTierForThisGame,
+                      iconSrc: gameModeIconSources[gameConfig.id.toLowerCase()],
+                      isPlayed: !!playerTierForThisGame,
+                      originalIndex: originalIndex,
                     };
+                  })
+                  .sort((a, b) => {
+                    if (a.isPlayed && !b.isPlayed) return -1;
+                    if (!a.isPlayed && b.isPlayed) return 1;
+                    return a.originalIndex - b.originalIndex;
                   });
 
                 const rank = player.overallRank;
@@ -221,43 +218,43 @@ const Overall = () => {
                       </div>
                     </div>
 
-                    <div className="flex-shrink-0 flex flex-wrap justify-end items-center gap-1 sm:gap-1.5 w-1/3 sm:w-2/5 lg:w-1/2 pl-2">
-                      {playerGames.length > 0 ? (
-                        playerGames.slice(0, 3).map((gameDetails, idx) => {
-                          // MODIFIED: Get icon source based on gameDetails.id
-                          const iconSrc = gameModeIconSources[gameDetails.id.toLowerCase()]; // Use toLowerCase for robust matching
-
+                    <div className="ml-auto flex-shrink-0 flex flex-wrap justify-start items-start gap-0.5 sm:gap-1">
+                      {allGameModeDetails.length > 0 ? (
+                        allGameModeDetails.map((gameDetails) => {
                           return (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              // Adjusted padding for icon, added flex to center icon
-                              className="w-6 h-6 sm:w-7 sm:h-7 p-0.5 flex items-center justify-center border-[#ffc125]/30 group-hover:border-[#ffc125]/50 rounded-full cursor-default transition-colors"
-                              title={gameDetails.name} // Tooltip with game name
+                            <div
+                              key={gameDetails.id}
+                              className={`flex flex-col items-center p-1.5 rounded-md ${gameDetails.isPlayed ? 'bg-gray-700/20 hover:bg-gray-700/40' : 'bg-gray-800/30 opacity-60'} transition-all duration-200 w-11 sm:w-12 group ${gameDetails.isPlayed ? 'cursor-pointer' : 'cursor-default'}`}
+                              title={gameDetails.isPlayed ? `${gameDetails.name} - Tier: ${gameDetails.tier?.toUpperCase()}` : gameDetails.name}
                             >
-                              {iconSrc ? (
-                                <img
-                                  src={iconSrc}
-                                  alt={gameDetails.name}
-                                  // Adjust icon size as needed
-                                  className="w-3 h-3 sm:w-3.5 sm:h-3.5"
-                                />
-                              ) : (
-                                // Fallback if icon is not found (e.g., show initials or short name)
-                                <span className="text-[9px] sm:text-[10px] text-[#ffc125]/60 group-hover:text-[#ffc125]/90">
-                                  {gameDetails.name.substring(0,1).toUpperCase()}
-                                </span>
-                              )}
-                            </Badge>
+                              <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center mb-0.5">
+                                {gameDetails.isPlayed ? (
+                                  gameDetails.iconSrc ? (
+                                    <img
+                                      src={gameDetails.iconSrc}
+                                      alt={gameDetails.name}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  ) : (
+                                    <span className="text-sm font-bold text-[#ffc125]/70 group-hover:text-[#ffc125]/90">
+                                      {gameDetails.name.substring(0,1).toUpperCase()}
+                                    </span>
+                                  )
+                                ) : (
+                                  <span className="text-lg sm:text-xl font-bold text-gray-500 group-hover:text-gray-400">
+                                    ?
+                                  </span>
+                                )}
+                              </div>
+                              {/* <<<--- აქ შეიცვალა ტექსტის ზომა და შიგთავსი "???"-თვის --->>> */}
+                              <span className={`text-[10px] sm:text-xs font-semibold tracking-wider max-w-full truncate ${gameDetails.isPlayed ? 'text-amber-400 group-hover:text-amber-300' : 'text-gray-600'}`}>
+                                {gameDetails.isPlayed ? (gameDetails.tier as string)?.toUpperCase() : "???"}
+                              </span>
+                            </div>
                           );
                         })
                       ) : (
-                        <span className="text-xs text-gray-500 italic">No games</span>
-                      )}
-                      {playerGames.length > 3 && (
-                        <Badge variant="outline" className="px-2 py-0.5 text-[10px] sm:text-xs border-gray-700 text-gray-500 group-hover:text-gray-400 rounded-full cursor-default transition-colors">
-                          +{playerGames.length - 3}
-                        </Badge>
+                        <span className="text-xs text-gray-500 italic">No minigames defined.</span>
                       )}
                     </div>
                   </Link>

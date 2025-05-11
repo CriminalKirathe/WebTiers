@@ -43,7 +43,7 @@ const App = () => (
                 <Route path="/player/:playerId" element={<PlayerProfile />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<ProtectedRoute />}>
-                  <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/admin" element={<AdminPanel />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

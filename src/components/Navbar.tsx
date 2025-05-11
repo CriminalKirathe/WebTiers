@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MINI_GAMES } from '@/utils/types';
-import { Menu, X, LogOut, ShieldCheck, LogIn as LogInIcon } from 'lucide-react';
+import { Menu, X, LogOut, ShieldCheck, Search as SearchIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -15,14 +15,16 @@ import overallIconUrl from '@/assets/overall.svg';
 import potIconUrl from '@/assets/icons/gamemodes/pot.svg';
 import uhcIconUrl from '@/assets/icons/gamemodes/uhc.svg';
 import swordIconUrl from '@/assets/icons/gamemodes/sword.svg';
-import smpIconUrl from '@/assets/icons/gamemodes/smp.svg'; // <--- დაემატა SMP იკონის იმპორტი
+import smpIconUrl from '@/assets/icons/gamemodes/smp.svg';
 
 const Navbar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // ეს არის განსაზღვრული
   const { user, signOut, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   const commonLinkStyles = "rounded-md font-medium transition-colors duration-150 ease-in-out text-sm";
   const defaultTextAndHover = "text-gray-300 hover:text-[#ffc125] hover:bg-[#1f2028]";
@@ -32,26 +34,45 @@ const Navbar = () => {
   const adminButtonDefaultStyle = "text-gray-300 bg-[#1f2028] hover:text-[#ffc125] hover:bg-[#1f2028]/70";
   const adminButtonActiveStyle = "text-[#0a0e15] bg-[#ffc125] hover:bg-[#ffc125]/90";
 
-  // მინი-თამაშების იკონების რუკა
   const miniGameIcons: Record<string, string> = {
     vanilla: vanillaIconUrl,
     axe: axeIconUrl,
     mace: maceIconUrl,
     netherite: netheriteIconUrl,
-    potpvp: potIconUrl, 
+    potpvp: potIconUrl,
     uhc: uhcIconUrl,
     sword: swordIconUrl,
-    smp: smpIconUrl, // <--- დაემატა SMP იკონი რუკაში
+    smp: smpIconUrl,
   };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      setIsMobileMenuOpen(false);
-      navigate('/'); 
+      setIsMobileMenuOpen(false); // მობილური მენიუს დახურვა
+      navigate('/');
       toast.success("Successfully logged out.");
     } catch (error) {
       console.error("Navbar signout error", error);
+      toast.error("Failed to log out. Please try again.");
+    }
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedQuery = searchQuery.trim(); // დავამატე trimmedQuery ცვლადი სიცხადისთვის
+    if (trimmedQuery) {
+      navigate(`/player/${trimmedQuery}`);
+      setSearchQuery(''); // გასუფთავება ძებნის შემდეგ
+      if (isMobileMenuOpen) {
+        setIsMobileMenuOpen(false); // მობილური მენიუს დახურვა
+      }
+    } else {
+      // სურვილისამებრ: შეტყობინება, თუ საძიებო ველი ცარიელია
+      // toast.info("Please enter a player name.");
     }
   };
 
@@ -61,8 +82,8 @@ const Navbar = () => {
         to="/overall"
         title="Overall Rankings"
         className={`${commonLinkStyles} ${currentPath === '/overall' ? activeTextAndBg : defaultTextAndHover} 
-                    ${isMobile ? 'flex items-center w-full text-left px-3 py-2' 
-                               : 'inline-flex flex-col items-center justify-center text-center p-1 h-full w-[70px] sm:w-[80px]'}`}
+                     ${isMobile ? 'flex items-center w-full text-left px-3 py-2' 
+                       : 'inline-flex flex-col items-center justify-center text-center p-1 h-full w-[70px] sm:w-[80px]'}`}
         onClick={() => isMobile && setIsMobileMenuOpen(false)}
       >
         <img src={overallIconUrl} alt="Overall icon" className={` ${isMobile ? 'w-4 h-4 mr-2' : 'w-5 h-5 mb-0.5'}`} />
@@ -80,7 +101,7 @@ const Navbar = () => {
               to={`/mini-game/${game.id}`}
               title={game.name}
               className={`${commonLinkStyles} ${isActive ? activeTextAndBg : defaultTextAndHover} 
-                          inline-flex flex-col items-center justify-center text-center p-1 h-full w-[70px] sm:w-[80px]`}
+                           inline-flex flex-col items-center justify-center text-center p-1 h-full w-[70px] sm:w-[80px]`}
               onClick={() => isMobile && setIsMobileMenuOpen(false)}
             >
               <img src={iconUrl} alt={`${game.name} icon`} className="w-5 h-5 mb-0.5" />
@@ -120,7 +141,20 @@ const Navbar = () => {
             {renderNavLinks()}
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3"> 
+            {/* --- მოთამაშის საძიებო ველი (დესკტოპ) --- */}
+            <form onSubmit={handleSearchSubmit} className="hidden md:flex items-center relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-[15px] w-[15px] text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="მოთამაშის ძებნა..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="bg-[#1f2028] text-gray-300 placeholder-gray-500 text-sm rounded-md pl-9 pr-3 py-1.5 h-9 focus:ring-1 focus:ring-[#ffc125] focus:border-[#ffc125] focus:outline-none transition-colors duration-150 ease-in-out"
+                style={{ minWidth: '160px', maxWidth: '220px' }}
+              />
+            </form>
+
             {authLoading ? (
               <div className="w-8 h-8 rounded-full animate-pulse bg-gray-700"></div>
             ) : user ? (
@@ -135,18 +169,13 @@ const Navbar = () => {
                   onClick={handleSignOut}
                   variant="outline"
                   size="sm"
-                  className="border-[#ffc125]/50 text-[#ffc125]/90 hover:bg-[#1f2028] hover:text-[#ffc125] flex items-center px-3"
+                  className="border-[#ffc125]/50 text-[#ffc125]/90 hover:bg-[#1f2028] hover:text-[#ffc125] flex items-center px-3 h-9"
                 >
                   <LogOut className="mr-1.5 h-4 w-4" /> Logout
                 </Button>
               </>
             ) : (
-              <Link
-                to="/login"
-                className={`${adminButtonBaseStyle} ${adminButtonDefaultStyle}`}
-              >
-                 <LogInIcon className="mr-1.5 h-4 w-4" /> Login
-              </Link>
+              null // Login ღილაკი ამოღებულია
             )}
             
             <div className="md:hidden">
@@ -169,6 +198,18 @@ const Navbar = () => {
         <div className="md:hidden border-t-2 border-[#1f2028] bg-[#0a0e15]" id="mobile-menu">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {renderNavLinks(true)}
+
+            {/* --- მოთამაშის საძიებო ველი (მობილური) --- */}
+            <form onSubmit={handleSearchSubmit} className="px-1 py-2">
+              <input
+                type="text"
+                placeholder="მოთამაშის ძებნა..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="block w-full px-3 py-2 text-sm rounded-md bg-[#1f2028] text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#ffc125]"
+              />
+            </form>
+            
             <div className="pt-2 mt-2 border-t border-[#1f2028]/50">
               {authLoading ? null : user ? (
                 <>
@@ -180,20 +221,14 @@ const Navbar = () => {
                     <ShieldCheck className="mr-1.5 h-4 w-4" /> Admin Panel
                   </Link>
                   <button
-                    onClick={handleSignOut}
+                    onClick={handleSignOut} // აქაც საჭიროა setIsMobileMenuOpen(false) გამოძახება handleSignOut-ში უკვე არის
                     className={`${commonLinkStyles} ${defaultTextAndHover} block w-full text-left px-3 py-2 flex items-center`}
                   >
                     <LogOut className="mr-1.5 h-4 w-4" /> Logout
                   </button>
                 </>
               ) : (
-                <Link
-                  to="/login"
-                  className={`${commonLinkStyles} ${defaultTextAndHover} block w-full text-left px-3 py-2 flex items-center`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <LogInIcon className="mr-1.5 h-4 w-4" /> Admin Login
-                </Link>
+                null // Login ღილაკი ამოღებულია მობილური მენიუდანაც
               )}
             </div>
           </div>

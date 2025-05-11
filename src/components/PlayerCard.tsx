@@ -55,9 +55,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player, miniGameType, showTier 
           <h3 className="font-minecraft text-xs sm:text-sm text-gray-200 truncate">
             {player.username}
           </h3>
-          <p className="text-xs text-gray-400">
-            {player.overallRank !== undefined ? `Rank #${player.overallRank}` : 'Unranked'}
-          </p>
+
         </div>
         {showTier && tierInfoForBadge && (
           <div className={`ml-1.5 flex-shrink-0 px-1.5 py-px rounded text-xs font-bold ${getBadgeStyling()}`}>
