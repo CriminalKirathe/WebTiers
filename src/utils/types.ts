@@ -50,6 +50,10 @@ export const TIER_POINTS: Record<TierRating, number> = {
   ht2: 30,
   lt1: 45,
   ht1: 60,
+  rlt2: 20,
+  rht2: 30,
+  rlt1: 45,
+  rht1: 60,
 };
 
 // MINI_GAMES ობიექტის ტიპი განახლებულია discordLink-ის დასამატებლად
@@ -74,15 +78,20 @@ export const TIER_LABELS: Record<TierRating, {
   display: string;
   tierNumber: 1 | 2 | 3 | 4 | 5;
   isHigh: boolean;
+  isRetired: boolean;
 }> = {
-  ht1: { display: "High Tier 1", tierNumber: 1, isHigh: true },
-  lt1: { display: "Low Tier 1", tierNumber: 1, isHigh: false },
-  ht2: { display: "High Tier 2", tierNumber: 2, isHigh: true },
-  lt2: { display: "Low Tier 2", tierNumber: 2, isHigh: false },
-  ht3: { display: "High Tier 3", tierNumber: 3, isHigh: true },
-  lt3: { display: "Low Tier 3", tierNumber: 3, isHigh: false },
-  ht4: { display: "High Tier 4", tierNumber: 4, isHigh: true },
-  lt4: { display: "Low Tier 4", tierNumber: 4, isHigh: false },
-  ht5: { display: "High Tier 5", tierNumber: 5, isHigh: true },
-  lt5: { display: "Low Tier 5", tierNumber: 5, isHigh: false },
+  ht1: { display: "High Tier 1", tierNumber: 1, isHigh: true, isRetired: false },
+  lt1: { display: "Low Tier 1", tierNumber: 1, isHigh: false, isRetired: false },
+  ht2: { display: "High Tier 2", tierNumber: 2, isHigh: true, isRetired: false },
+  lt2: { display: "Low Tier 2", tierNumber: 2, isHigh: false, isRetired: false },
+  ht3: { display: "High Tier 3", tierNumber: 3, isHigh: true, isRetired: false },
+  lt3: { display: "Low Tier 3", tierNumber: 3, isHigh: false, isRetired: false },
+  ht4: { display: "High Tier 4", tierNumber: 4, isHigh: true, isRetired: false },
+  lt4: { display: "Low Tier 4", tierNumber: 4, isHigh: false, isRetired: false },
+  ht5: { display: "High Tier 5", tierNumber: 5, isHigh: true, isRetired: false },
+  lt5: { display: "Low Tier 5", tierNumber: 5, isHigh: false, isRetired: false },
+  rht1: { display: "Retired High Tier 1", tierNumber: 1, isHigh: true, isRetired: true },
+  rlt1: { display: "Retired Low Tier 1", tierNumber: 1, isHigh: false, isRetired: true },
+  rht2: { display: "Retired High Tier 2", tierNumber: 2, isHigh: true, isRetired: true },
+  rlt2: { display: "Retired Low Tier 2", tierNumber: 2, isHigh: false, isRetired: true },
 };
