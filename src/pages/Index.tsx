@@ -85,32 +85,6 @@ const Index = () => {
 
   return (
     <div className="bg-[#0a0e15] text-gray-300 min-h-screen font-sans selection:bg-[#ffc125] selection:text-[#0a0e15]">
-      <header className="py-24 md:py-32 text-center relative overflow-hidden border-b-2 border-[#1f2028]">
-        <div className="absolute inset-0 opacity-[0.03]">
-            <Zap className="absolute top-1/4 left-1/4 w-24 h-24 text-[#ffc125] transform -rotate-12 animate-pulse" />
-            <ShieldCheck className="absolute bottom-1/3 right-1/4 w-28 h-28 text-[#ffc125] transform rotate-6 animate-pulse animation-delay-500" />
-            <Swords className="absolute top-1/3 right-[15%] w-20 h-20 text-[#ffc125] transform rotate-12 animate-pulse animation-delay-1000" />
-            <Gamepad2 className="absolute bottom-1/4 left-[18%] w-20 h-20 text-[#ffc125] transform -rotate-6 animate-pulse animation-delay-700" />
-        </div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-minecraft text-[#ffc125] mb-6 animate-minecraft-float">
-            Minecraft Player Tier List
-          </h1>
-          <p className="text-xl sm:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
-            აღმოაჩინე მოთამაშეთა რეიტინგები, გაეცანი ჩვენს ტიერების სისტემას და შეუერთდი საზოგადოებას.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Button 
-              onClick={() => document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' })}
-              variant="outline"
-              className="bg-[#1e2029] border-2 border-[#ffc125] text-[#ffc125] hover:bg-[#ffc125] hover:text-[#0a0e15] font-semibold py-3.5 px-10 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 w-full sm:w-auto"
-            >
-              გაიტესტე
-            </Button>
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-[#0a0e15] to-transparent z-0"></div>
-      </header>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 space-y-20 md:space-y-28">
         
