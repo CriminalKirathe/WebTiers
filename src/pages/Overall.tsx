@@ -140,10 +140,10 @@ const Overall = () => {
     }
     if (tierDetails.isRetired) {
       const prefix = tierDetails.isHigh ? "RHT" : "RLT";
-      return `${prefix}${tierDetails.tierNumber}`; // დაშორების გარეშე
+      return `${prefix}${tierDetails.tierNumber}`;
     } else {
       const prefix = tierDetails.isHigh ? "HT" : "LT";
-      return `${prefix}${tierDetails.tierNumber}`; // დაშორების გარეშე
+      return `${prefix}${tierDetails.tierNumber}`;
     }
   };
 
@@ -244,13 +244,13 @@ const Overall = () => {
                             return (
                               <div
                                 key={gameDetails.id}
-                                className={`flex flex-col items-center justify-center p-0.5 rounded-sm
-                                             w-[30px] h-[30px]
-                                             sm:w-9 sm:h-9 sm:p-1 sm:rounded
-                                             md:w-11 md:h-11 md:p-1.5 md:rounded-md
-                                             ${gameDetails.isPlayed ? 'bg-gray-700/20 hover:bg-gray-700/40' : 'bg-gray-800/30 opacity-60'}
-                                             transition-all duration-200 group
-                                             ${gameDetails.isPlayed ? 'cursor-pointer' : 'cursor-default'}`}
+                                className={`flex flex-col items-center justify-center rounded-sm
+                                              w-[30px] h-[30px]
+                                              sm:w-9 sm:h-9 sm:rounded
+                                              md:w-11 md:h-11 md:rounded-md
+                                              ${gameDetails.isPlayed ? 'bg-gray-700/20 hover:bg-gray-700/40' : 'bg-gray-800/30 opacity-60'}
+                                              transition-all duration-200 group
+                                              ${gameDetails.isPlayed ? 'cursor-pointer' : 'cursor-default'}`}
                                 title={gameDetails.isPlayed ? `${gameDetails.name} - ${formattedTier}` : `${gameDetails.name} (Not Played)`}
                               >
                                 {/* იკონის ჩვენება (უცვლელი) */}
@@ -269,12 +269,13 @@ const Overall = () => {
                                 </div>
 
                                 {/* --- განახლებული ტიერის ტექსტი --- */}
-                                <span className={`text-[9px] leading-tight tracking-tighter
-                                                 sm:text-[10px] sm:tracking-normal
-                                                 md:text-xs
-                                                 max-w-full truncate
-                                                 uppercase  /* <--- დამატებულია ეს კლასი */
-                                                 ${gameDetails.isPlayed ? 'text-amber-400 group-hover:text-amber-300' : 'text-gray-600'}`}>
+                                <span className={`
+                                  text-[9px] leading-normal tracking-tighter
+                                  sm:text-[10px] sm:leading-normal sm:tracking-normal
+                                  md:text-xs md:leading-normal
+                                  max-w-full truncate
+                                  uppercase
+                                  ${gameDetails.isPlayed ? 'text-amber-400 group-hover:text-amber-300' : 'text-gray-600'}`}>
                                   {gameDetails.isPlayed ? formattedTier : "---"}
                                 </span>
                               </div>
@@ -291,11 +292,11 @@ const Overall = () => {
             ) : (
               // თუ მოთამაშეები არ არიან (უცვლელი)
               !isInitiallyLoading && players.length === 0 && (
-                    <div className="p-8 sm:p-10 text-center text-gray-500 flex flex-col items-center space-y-3">
-                        <ListX className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
-                        <p className="text-base sm:text-lg">No players available to display.</p>
-                        <p className="text-xs sm:text-sm">Please check back later or add players via the admin panel.</p>
-                    </div>
+                  <div className="p-8 sm:p-10 text-center text-gray-500 flex flex-col items-center space-y-3">
+                      <ListX className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
+                      <p className="text-base sm:text-lg">No players available to display.</p>
+                      <p className="text-xs sm:text-sm">Please check back later or add players via the admin panel.</p>
+                  </div>
               )
             )}
           </div>
