@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-// იმპორტები
-import { Player, MINI_GAMES, TIER_LABELS, TierRating, TierLabelInfo, MiniGameType } from '@/utils/types';
+// იმპორტები - დაემატა TIER_POINTS
+import {
+    Player,
+    MINI_GAMES,
+    TIER_LABELS,
+    TierRating,
+    TierLabelInfo,
+    MiniGameType,
+    TIER_POINTS
+} from '@/utils/types';
 import { Trophy, ListX } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
@@ -30,7 +38,7 @@ const gameModeIconSources: { [key: string]: string } = {
     elytra: elytraIconSrc,
 };
 
-// mapFromDbData (უცვლელი)
+// mapFromDbData (Player.tiers ინახავს TierRating-ს)
 const mapFromDbData = (dbData: any): Player => {
     let rankFromDb = dbData.overall_rank;
     if (typeof rankFromDb === 'string') {
@@ -57,12 +65,41 @@ const mapFromDbData = (dbData: any): Player => {
     };
 };
 
+// Tooltip-ის შიგთავსის ტიპი
+interface CustomTooltipContent {
+    name: string; // აქ შეინახება "???" ან თამაშის სახელი
+    tier: string | null;
+    points: string | number | null;
+}
+
+// Tooltip-ის state-ის ტიპი
+interface CustomTooltipState {
+    visible: boolean;
+    content: CustomTooltipContent | null;
+    position: { x: number; y: number };
+}
+
+// GameDetails-ის ტიპი, რომელსაც ვიყენებთ handler-ში
+interface GameDetailsForTooltip {
+    id: MiniGameType | string;
+    name: string;
+    tier?: TierRating | null;
+    points?: number;
+    isPlayed: boolean;
+}
+
+
 // Overall კომპონენტი
 const Overall = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isInitiallyLoading, setIsInitiallyLoading] = useState(true);
 
-  // fetchPlayersAndRank (უცვლელი)
+  const [tooltip, setTooltip] = useState<CustomTooltipState>({
+    visible: false,
+    content: null,
+    position: { x: 0, y: 0 },
+  });
+
   const fetchPlayersAndRank = useCallback(async (isInitialCall = false) => {
         if (isInitialCall) {
             setIsInitiallyLoading(true);
@@ -93,7 +130,6 @@ const Overall = () => {
         }
   }, []);
 
-  // useEffect (უცვლელი)
   useEffect(() => {
         fetchPlayersAndRank(true);
         const intervalId = setInterval(() => {
@@ -104,7 +140,6 @@ const Overall = () => {
         };
   }, [fetchPlayersAndRank]);
 
-  // getRankStylingInfo (უცვლელი)
   const getRankStylingInfo = (rank: number | null | undefined): { bg: string; text: string; trophyClass: string; cardShadow: string; } => {
         if (rank === null || rank === undefined) { return { bg: 'bg-transparent', text: 'text-gray-500', trophyClass: 'hidden', cardShadow: 'shadow-none' }; }
         if (rank === 1) return { bg: 'bg-gradient-to-br from-yellow-400 via-[#ffc125] to-amber-500', text: 'text-[#0a0e15]', trophyClass: 'text-[#ffc125]', cardShadow: 'shadow-[0_0px_18px_rgba(255,193,37,0.5)] hover:shadow-[0_0px_25px_rgba(255,193,37,0.7)]'};
@@ -113,7 +148,6 @@ const Overall = () => {
         return { bg: 'bg-gray-700/40', text: 'text-gray-300', trophyClass: 'hidden', cardShadow: 'shadow-md'};
   };
 
-  // getRankRowStyling (უცვლელი)
   const getRankRowStyling = (rank: number | null | undefined, index: number): string => {
         let baseHover = "hover:bg-[#2a2b34] transition-all duration-200 ease-in-out transform hover:scale-[1.015] hover:shadow-lg";
         let specialStyling = "";
@@ -128,15 +162,13 @@ const Overall = () => {
         return `${specialStyling || 'bg-transparent'} ${baseHover}`;
   };
 
-  // დამხმარე ფუნქცია (ფორმატი HT1, LT2...) (უცვლელი)
-  const getFormattedTierAbbreviation = (tierRating: TierRating | undefined | null): string => {
+  const getFormattedTierAbbreviation = (tierRating?: TierRating | null): string => {
     if (!tierRating) {
       return "N/A";
     }
-    const tierDetails: TierLabelInfo | undefined = TIER_LABELS[tierRating];
+    const tierDetails = TIER_LABELS[tierRating as TierRating];
     if (!tierDetails) {
-      console.warn(`Overall: Tier details not found for rating ${tierRating}`);
-      return tierRating.toUpperCase();
+      return String(tierRating).toUpperCase();
     }
     if (tierDetails.isRetired) {
       const prefix = tierDetails.isHigh ? "RHT" : "RLT";
@@ -147,7 +179,42 @@ const Overall = () => {
     }
   };
 
-  // Loading state (უცვლელი)
+  const handleMouseEnterGameMode = (event: React.MouseEvent, gameDetails: GameDetailsForTooltip) => {
+    let contentToShow: CustomTooltipContent;
+
+    if (!gameDetails.isPlayed) {
+        contentToShow = {
+            name: "???", // ვაჩვენებთ სამ კითხვის ნიშანს
+            tier: null,    // არ ვაჩვენებთ ტიერს
+            points: null,  // არ ვაჩვენებთ ქულებს
+        };
+    } else {
+        const tierDisplay = getFormattedTierAbbreviation(gameDetails.tier);
+        const pointsDisplay = typeof gameDetails.points === 'number' ? gameDetails.points : "(N/A)";
+        contentToShow = {
+            name: gameDetails.name,
+            tier: tierDisplay,
+            points: pointsDisplay,
+        };
+    }
+    
+    setTooltip({
+        visible: true,
+        content: contentToShow,
+        position: { x: event.clientX, y: event.clientY },
+    });
+  };
+
+  const handleMouseLeaveGameMode = () => {
+    setTooltip(prev => ({ ...prev, visible: false }));
+  };
+
+  const handleMouseMoveGameMode = (event: React.MouseEvent) => {
+    if (tooltip.visible) {
+        setTooltip(prev => ({ ...prev, position: { x: event.clientX, y: event.clientY } }));
+    }
+  };
+
   if (isInitiallyLoading) {
       return (
           <div className="bg-[#0a0e15] text-gray-300 min-h-screen flex items-center justify-center">
@@ -156,11 +223,39 @@ const Overall = () => {
       );
   }
 
-  // --- რენდერინგი ---
   return (
     <div className="bg-[#0a0e15] min-h-screen text-gray-300">
+        {tooltip.visible && tooltip.content && (
+            <div
+                style={{
+                    position: 'fixed',
+                    top: tooltip.position.y,
+                    left: tooltip.position.x,
+                    transform: 'translate(15px, 15px)',
+                }}
+                className="bg-gray-900 text-white p-3 rounded-md shadow-xl z-50 pointer-events-none text-xs border border-gray-700 whitespace-nowrap"
+            >
+                {/* სახელი (ან "???") გამოჩნდება აქ */}
+                <div className="font-bold text-sm mb-1">{tooltip.content.name}</div>
+                
+                {/* ტიერი გამოჩნდება მხოლოდ თუ tooltip.content.tier არ არის null */}
+                {tooltip.content.tier !== null && (
+                    <div className="flex justify-between">
+                        <span>Tier:</span>
+                        <span className="font-semibold ml-2">{tooltip.content.tier}</span>
+                    </div>
+                )}
+                {/* ქულები გამოჩნდება მხოლოდ თუ tooltip.content.points არ არის null */}
+                {tooltip.content.points !== null && (
+                    <div className="flex justify-between">
+                        <span>Points:</span>
+                        <span className="font-semibold ml-2">{tooltip.content.points}</span>
+                    </div>
+                )}
+            </div>
+        )}
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
-        {/* ჰედერი (უცვლელი) */}
         <div className="text-center mb-8 sm:mb-12 md:mb-16">
              <Trophy className="w-14 h-14 sm:w-16 md:w-20 text-[#ffc125] mx-auto mb-3 sm:mb-4 filter drop-shadow-[0_0_10px_rgba(255,193,37,0.5)]" strokeWidth={1.5}/>
              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-minecraft text-[#ffc125] mb-2 sm:mb-3 tracking-wider">
@@ -171,9 +266,7 @@ const Overall = () => {
              </p>
         </div>
 
-        {/* ცხრილის სტრუქტურა */}
         <div className="bg-[#1f2028] shadow-2xl rounded-lg sm:rounded-xl overflow-hidden border border-[#2D3748]/70 dark:shadow-[0_10px_35px_rgba(255,193,37,0.15)]">
-          {/* ცხრილის ჰედერი (უცვლელი) */}
           <div className="p-3 sm:p-4 md:p-5 bg-[#0e131c]/90 border-b-2 border-[#ffc125]/50 sticky top-0 z-10 backdrop-blur-sm bg-opacity-80 dark:bg-opacity-70">
                <div className="grid grid-cols-12 gap-2 sm:gap-3 items-center text-xs sm:text-sm font-semibold text-gray-300 dark:text-gray-400 uppercase tracking-wider">
                    <div className="col-span-1 text-center">#</div>
@@ -182,19 +275,30 @@ const Overall = () => {
                </div>
           </div>
 
-          {/* მოთამაშეების სია */}
           <div className="player-list-container">
             {players.length > 0 ? (
               players.map((player, index) => {
                 const allGameModeDetails = MINI_GAMES
                   .map((gameConfig, originalIndex) => {
-                    const playerTierForThisGame = player.tiers?.[gameConfig.id as keyof Player['tiers']];
-                    return {
+                    const playerTierForThisGame = player.tiers?.[gameConfig.id as MiniGameType];
+                    let pointsForThisGame: number | undefined = undefined;
+                    const isPlayerPlayedThisGame = !!playerTierForThisGame;
+
+                    if (playerTierForThisGame && TIER_POINTS.hasOwnProperty(playerTierForThisGame)) {
+                        pointsForThisGame = TIER_POINTS[playerTierForThisGame];
+                    }
+
+                    const detailsForTooltip: GameDetailsForTooltip = {
                       id: gameConfig.id,
                       name: gameConfig.name || gameConfig.id,
                       tier: playerTierForThisGame,
+                      points: pointsForThisGame,
+                      isPlayed: isPlayerPlayedThisGame,
+                    };
+
+                    return {
+                      ...detailsForTooltip,
                       iconSrc: gameModeIconSources[gameConfig.id.toLowerCase()],
-                      isPlayed: !!playerTierForThisGame,
                       originalIndex: originalIndex,
                     };
                   })
@@ -213,16 +317,13 @@ const Overall = () => {
                     key={player.id}
                     className={`w-full flex items-start p-2 sm:p-3 md:p-4 border-b border-[#0a0e15]/60 dark:border-[#2d3748]/40 last:border-b-0 ${getRankRowStyling(rank, index)} cursor-pointer group`}
                   >
-                    {/* რანკის ბლოკი (უცვლელი) */}
                     <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center rounded-md sm:rounded-lg mr-2 sm:mr-3 md:mr-4 ${currentRankStyling.bg} ${currentRankStyling.cardShadow || ''} transition-all duration-300 group-hover:brightness-110 relative`}>
                           <span className={`text-base sm:text-lg md:text-xl font-bold font-minecraft ${currentRankStyling.text}`}>
                               {player.overallRank}
                           </span>
                     </div>
 
-                    {/* მოთამაშის ინფო და მინი-თამაშები */}
                     <div className="flex-grow min-w-0 flex flex-col xs:flex-row xs:items-center">
-                      {/* მოთამაშის ინფო (უცვლელი) */}
                       <div className="flex items-center min-w-0 w-full xs:flex-grow">
                             <img
                                 src={player.skinUrl || `https://mc-heads.net/avatar/${player.username}/40`}
@@ -235,25 +336,24 @@ const Overall = () => {
                             </div>
                       </div>
 
-                      {/* მინი-თამაშების იკონების არე */}
                       <div className="w-full xs:w-auto mt-2 xs:mt-0 xs:ml-auto flex-shrink-0 flex flex-wrap justify-start xs:justify-end items-center gap-px sm:gap-1">
                         {allGameModeDetails.length > 0 ? (
                           allGameModeDetails.map((gameDetails) => {
-                            const formattedTier = getFormattedTierAbbreviation(gameDetails.tier);
-
+                            const formattedTierDisplay = getFormattedTierAbbreviation(gameDetails.tier);
                             return (
                               <div
                                 key={gameDetails.id}
-                                className={`flex flex-col items-center justify-center rounded-sm
+                                onMouseEnter={(e) => handleMouseEnterGameMode(e, gameDetails as GameDetailsForTooltip)}
+                                onMouseLeave={handleMouseLeaveGameMode}
+                                onMouseMove={handleMouseMoveGameMode}
+                                className={`relative flex flex-col items-center justify-center rounded-sm
                                               w-[30px] h-[30px]
                                               sm:w-9 sm:h-9 sm:rounded
                                               md:w-11 md:h-11 md:rounded-md
                                               ${gameDetails.isPlayed ? 'bg-gray-700/20 hover:bg-gray-700/40' : 'bg-gray-800/30 opacity-60'}
                                               transition-all duration-200 group
                                               ${gameDetails.isPlayed ? 'cursor-pointer' : 'cursor-default'}`}
-                                title={gameDetails.isPlayed ? `${gameDetails.name} - ${formattedTier}` : `${gameDetails.name} (Not Played)`}
                               >
-                                {/* იკონის ჩვენება (უცვლელი) */}
                                 <div className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 flex items-center justify-center">
                                     {gameDetails.isPlayed ? (
                                         gameDetails.iconSrc ? (
@@ -267,8 +367,6 @@ const Overall = () => {
                                         <span className="text-sm sm:text-base md:text-lg font-bold text-gray-500 group-hover:text-gray-400">?</span>
                                     )}
                                 </div>
-
-                                {/* --- განახლებული ტიერის ტექსტი --- */}
                                 <span className={`
                                   text-[9px] leading-normal tracking-tighter
                                   sm:text-[10px] sm:leading-normal sm:tracking-normal
@@ -276,7 +374,7 @@ const Overall = () => {
                                   max-w-full truncate
                                   uppercase
                                   ${gameDetails.isPlayed ? 'text-amber-400 group-hover:text-amber-300' : 'text-gray-600'}`}>
-                                  {gameDetails.isPlayed ? formattedTier : "---"}
+                                  {gameDetails.isPlayed ? formattedTierDisplay : "---"}
                                 </span>
                               </div>
                             );
@@ -290,7 +388,6 @@ const Overall = () => {
                 );
               })
             ) : (
-              // თუ მოთამაშეები არ არიან (უცვლელი)
               !isInitiallyLoading && players.length === 0 && (
                   <div className="p-8 sm:p-10 text-center text-gray-500 flex flex-col items-center space-y-3">
                       <ListX className="w-10 h-10 sm:w-12 sm:h-12 text-gray-600" />
