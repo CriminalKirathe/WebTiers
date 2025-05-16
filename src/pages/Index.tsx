@@ -1,6 +1,6 @@
 import React from 'react';
 // import { Link } from 'react-router-dom'; // თუ არ იყენებთ, შეგიძლიათ წაშალოთ
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// Card, CardHeader, CardContent, CardTitle შეიძლება ნაკლებად გამოვიყენოთ ან სხვანაირად
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MINI_GAMES, TIER_POINTS, TierRating } from '@/utils/types'; // დარწმუნდით, რომ ეს ფაილი განახლებულია!
 import { 
-  Trophy, Gamepad2, Settings2, ShieldCheck, Swords, Box, Layers, Mail, MessageSquareText,
-  HelpCircle, Settings, ListChecks, Gem, Info, FileText, ChevronRight, ExternalLink,
-  Flame, Sword, Axe, Hammer,
+  ShieldCheck, Swords, Box, Layers, MessageSquareText,
+  ListChecks, Gem, Info, FileText, ChevronRight, ExternalLink,
+  Flame, Sword, Axe, Hammer, Zap, Users, Mail, Star, Gamepad2, HelpCircle, Settings
 } from 'lucide-react';
 
 const getMiniGameIcon = (gameId: string, className: string = "w-5 h-5 mr-2 inline-block"): React.ReactNode => {
@@ -36,162 +36,210 @@ const PointExamples = () => {
   const pointsToShow = exampleTiers.filter(tier => TIER_POINTS[tier] !== undefined);
 
   return (
-    <ul className="mt-2 space-y-1.5 text-gray-400">
-      {pointsToShow.map(tier => (
-        <li key={tier} className="flex items-center">
-          <ChevronRight className="w-4 h-4 mr-2 text-[#ffc125]/70 flex-shrink-0" />
-          <span className="font-medium text-gray-300">{tier.toUpperCase()}</span>: {TIER_POINTS[tier]} ქულა
-        </li>
-      ))}
-      {Object.keys(TIER_POINTS).length > pointsToShow.length &&
-        <li className="flex items-center">
-          <ChevronRight className="w-4 h-4 mr-2 text-[#ffc125]/70 flex-shrink-0" />
-          <span>და სხვა ტიერები შესაბამისი ქულებით...</span>
-        </li>
-      }
-    </ul>
+    <div className="mt-4 p-4 bg-[#0a0e15]/60 rounded-lg border border-[#ffc125]/30 shadow-inner">
+      <h4 className="text-md font-semibold text-[#ffc125]/90 mb-3 flex items-center">
+        <Star className="w-4 h-4 mr-2 text-[#ffc125]/70" />
+        ქულების განაწილების მაგალითები:
+      </h4>
+      <ul className="space-y-2 text-sm">
+        {pointsToShow.map(tier => (
+          <li key={tier} className="flex justify-between items-center p-2.5 bg-[#1f2028]/70 rounded-md hover:bg-[#1f2028] transition-colors duration-200 ease-in-out">
+            <span className="font-medium text-gray-300 flex items-center">
+              <ChevronRight className="w-4 h-4 mr-1.5 text-[#ffc125]/70 flex-shrink-0" />
+              {tier.toUpperCase()}
+            </span>
+            <span className="text-[#ffc125] font-bold text-base">{TIER_POINTS[tier]} ქულა</span>
+          </li>
+        ))}
+        {Object.keys(TIER_POINTS).length > pointsToShow.length && (
+          <li className="text-center text-gray-500 pt-2 text-xs italic">
+            და სხვა ტიერები შესაბამისი ქულებით...
+          </li>
+        )}
+      </ul>
+    </div>
   );
 };
 
-const Index = () => {
-  const cardBaseClasses = "bg-[#1f2028] rounded-xl shadow-xl dark:shadow-[0_8px_20px_rgba(255,193,37,0.07)] border border-transparent hover:border-[#ffc125]/40 transition-all duration-300 ease-in-out transform hover:-translate-y-1 cursor-pointer h-full flex flex-col";
-  const cardHeaderClasses = "pb-3 pt-5 border-b border-[#0a0e15]/50";
-  const cardTitleClasses = "text-[#ffc125] font-semibold text-lg sm:text-xl flex items-center";
-  const cardContentClasses = "pt-4 text-gray-400 text-sm flex-grow";
+const InfoBlock = ({ icon: Icon, title, children, titleColor = "text-[#ffc125]" }: { icon: React.ElementType, title: string, children: React.ReactNode, titleColor?: string }) => (
+  <div className="bg-[#1f2028] p-6 rounded-xl shadow-xl hover:shadow-[#ffc125]/10 border border-[#ffc125]/20 hover:border-[#ffc125]/50 transition-all duration-300 transform hover:scale-[1.03] group">
+    <div className="flex items-center mb-4">
+      <div className="p-2.5 bg-[#0a0e15] rounded-lg mr-4 group-hover:bg-[#ffc125]/10 transition-colors duration-300">
+        <Icon className={`w-7 h-7 ${titleColor === "text-[#ffc125]" ? "text-[#ffc125]" : "text-[#ffc125]/80"} group-hover:text-[#ffc125] transition-colors duration-300`} />
+      </div>
+      <h3 className={`text-xl sm:text-2xl font-semibold ${titleColor} group-hover:brightness-125 transition-all duration-300`}>{title}</h3>
+    </div>
+    <div className="text-gray-400 text-sm sm:text-base leading-relaxed space-y-3">
+      {children}
+    </div>
+  </div>
+);
 
-  // !!! მნიშვნელოვანია: ჩაანაცვლეთ ეს თქვენი რეალური მთავარი Discord სერვერის ლინკით !!!
+
+const Index = () => {
   const generalDiscordLink = "YOUR_MAIN_DISCORD_INVITE_LINK"; 
 
-  // ფილტრავს მინი-თამაშებს, რომლებსაც აქვთ ვალიდური discordLink
-  // MINI_GAMES უნდა მოდიოდეს თქვენი განახლებული types.ts ფაილიდან
   const discordServersForMiniGames = MINI_GAMES.filter(
     game => game.discordLink && game.discordLink.trim() !== ''
   );
 
   return (
-    <div className="bg-[#0a0e15] text-gray-300 min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="text-center mb-12 md:mb-16">
-           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-minecraft text-[#ffc125] mb-4 animate-minecraft-float">
-             Minecraft Player Tier List
-           </h1>
-           <p className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
-             View player rankings across different mini-games and competitive modes.
-           </p>
-         </div>
+    <div className="bg-[#0a0e15] text-gray-300 min-h-screen font-sans selection:bg-[#ffc125] selection:text-[#0a0e15]">
+      <header className="py-24 md:py-32 text-center relative overflow-hidden border-b-2 border-[#1f2028]">
+        <div className="absolute inset-0 opacity-[0.03]">
+            <Zap className="absolute top-1/4 left-1/4 w-24 h-24 text-[#ffc125] transform -rotate-12 animate-pulse" />
+            <ShieldCheck className="absolute bottom-1/3 right-1/4 w-28 h-28 text-[#ffc125] transform rotate-6 animate-pulse animation-delay-500" />
+            <Swords className="absolute top-1/3 right-[15%] w-20 h-20 text-[#ffc125] transform rotate-12 animate-pulse animation-delay-1000" />
+            <Gamepad2 className="absolute bottom-1/4 left-[18%] w-20 h-20 text-[#ffc125] transform -rotate-6 animate-pulse animation-delay-700" />
+        </div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-minecraft text-[#ffc125] mb-6 animate-minecraft-float">
+            Minecraft Player Tier List
+          </h1>
+          <p className="text-xl sm:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
+            აღმოაჩინე მოთამაშეთა რეიტინგები, გაეცანი ჩვენს ტიერების სისტემას და შეუერთდი საზოგადოებას.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6">
+            <Button 
+              onClick={() => document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' })}
+              variant="outline"
+              className="bg-[#1e2029] border-2 border-[#ffc125] text-[#ffc125] hover:bg-[#ffc125] hover:text-[#0a0e15] font-semibold py-3.5 px-10 rounded-lg text-lg transition-all duration-300 transform hover:scale-105 w-full sm:w-auto"
+            >
+              გაიტესტე
+            </Button>
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-[#0a0e15] to-transparent z-0"></div>
+      </header>
 
-         <section className="mb-12 md:mb-16">
-           <Card className="bg-[#1f2028] border border-[#0a0e15]/50 shadow-lg dark:shadow-[0_8px_30px_rgba(255,193,37,0.06)] rounded-lg p-6 md:p-8">
-             <CardHeader className="p-0 mb-6 sm:mb-8 text-center">
-               <CardTitle className="text-2xl sm:text-3xl font-semibold text-[#ffc125]">
-                 ჩვენი ტიერლისტების სისტემის შესახებ
-               </CardTitle>
-             </CardHeader>
-             <CardContent className="p-0 text-gray-300 space-y-6 text-sm sm:text-base leading-relaxed">
-                <div>
-                  <h3 className="flex items-center font-semibold text-lg sm:text-xl text-[#ffc125]/90 mb-2">
-                    <Info className="w-5 h-5 mr-2.5 text-[#ffc125]/70 flex-shrink-0" />
-                    რა არის ტიერლისტი?
-                  </h3>
-                  <p className="pl-8 text-gray-400">ტიერლისტი არის რანგირების სისტემა, რომელიც ხშირად გამოიყენება ვიდეო თამაშებში ელემენტების (მაგალითად, პერსონაჟების, იარაღების, ან ამ შემთხვევაში, მოთამაშეების) შესაფასებლად და დასალაგებლად მათი სიძლიერის ან ეფექტურობის მიხედვით. "S" ტიერი, როგორც წესი, უმაღლეს რანგს აღნიშნავს, რასაც მოჰყვება A, B, C და D ტიერები, რომლებიც კლებადობით მიუთითებენ ეფექტურობაზე.</p>
-                </div>
-                <div>
-                  <h3 className="flex items-center font-semibold text-lg sm:text-xl text-[#ffc125]/90 mb-2">
-                    <ListChecks className="w-5 h-5 mr-2.5 text-[#ffc125]/70 flex-shrink-0" />
-                    როგორ მუშაობს ჩვენი სისტემა?
-                  </h3>
-                  <p className="pl-8 text-gray-400">ჩვენი Minecraft-ის მოთამაშეთა ტიერლისტი აფასებს მოთამაშეებს სხვადასხვა მინი-თამაშებში მათი შედეგების მიხედვით. თითოეულ მოთამაშეს ენიჭება ტიერი (მაგალითად, HT1, LT5, RHT2) კონკრეტული მინი-თამაშისთვის, რომელშიც მონაწილეობა მიიღო. ეს ინდივიდუალური ტიერები ჯამდება და განსაზღვრავს მოთამაშის საერთო ქულებს.</p>
-                </div>
-                <div>
-                  <h3 className="flex items-center font-semibold text-lg sm:text-xl text-[#ffc125]/90 mb-2">
-                    <Gem className="w-5 h-5 mr-2.5 text-[#ffc125]/70 flex-shrink-0" />
-                    ქულების მინიჭების პრინციპი
-                  </h3>
-                  <div className="pl-8">
-                    <p className="text-gray-400 mb-1">მოთამაშეები აგროვებენ ქულებს თითოეულ მინი-თამაშში მიღწეული ტიერის შესაბამისად. სისტემა აჯილდოებს მაღალ და სტაბილურ შედეგებს. ქულები ნაწილდება შემდეგნაირად:</p>
-                    <PointExamples />
-                    <p className="mt-3 text-gray-400">მოთამაშის ჯამური ქულა არის ყველა მინი-თამაშში მიღებული ქულების ჯამი. "Overall Rankings" გვერდზე მოთამაშეები სწორედ ამ ჯამური ქულების მიხედვით არიან დალაგებული.</p>
-                  </div>
-                </div>
-                 <div>
-                  <h3 className="flex items-center font-semibold text-lg sm:text-xl text-[#ffc125]/90 mb-2">
-                    <FileText className="w-5 h-5 mr-2.5 text-[#ffc125]/70 flex-shrink-0" />
-                    დამატებითი ინფორმაცია
-                  </h3>
-                  <p className="pl-8 text-gray-400">ჩვენი მიზანია შევქმნათ სამართლიანი და გამჭვირვალე რანგირების სისტემა Minecraft-ის მოთამაშეებისთვის. სისტემა მუდმივად განახლდება და იხვეწება თქვენი აქტიურობისა და გამოხმაურების საფუძველზე.</p>
-                </div>
-             </CardContent>
-           </Card>
-         </section>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 space-y-20 md:space-y-28">
+        
+        <section id="about-system-section" className="scroll-mt-24">
+          <div className="text-center mb-14 md:mb-20">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#ffc125] mb-4">
+              ჩვენი ტიერების სისტემის მიმოხილვა
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto">
+              გამჭვირვალე ახსნა, თუ როგორ ვაფასებთ მოთამაშეებს და რას ნიშნავს ტიერების რეიტინგები.
+            </p>
+          </div>
 
-        <section className="mt-16 md:mt-20 py-10 border-t-2 border-[#1f2028]">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-[#ffc125] text-center mb-8">
-            Get In Touch
-          </h2>
-          <div className="max-w-2xl mx-auto text-center text-gray-400 space-y-5">
-            <p className="text-lg">Have questions, suggestions, or want to get involved? Reach out to us!</p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 pt-2">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
+            <InfoBlock icon={Info} title="რა არის ტიერლისტი?">
+              <p>ტიერლისტი არის რანგირების სისტემა, რომელიც ხშირად გამოიყენება ვიდეო თამაშებში ელემენტების (მაგალითად, პერსონაჟების, იარაღების, ან ამ შემთხვევაში, მოთამაშეების) შესაფასებლად და დასალაგებლად მათი სიძლიერის ან ეფექტურობის მიხედვით. "S" ტიერი, როგორც წესი, უმაღლეს რანგს აღნიშნავს, რასაც მოჰყვება A, B, C და D ტიერები, რომლებიც კლებადობით მიუთითებენ ეფექტურობაზე.</p>
+            </InfoBlock>
+
+            <InfoBlock icon={ListChecks} title="როგორ მუშაობს ჩვენი სისტემა?">
+              <p>ჩვენი Minecraft-ის მოთამაშეთა ტიერლისტი აფასებს მოთამაშეებს სხვადასხვა მინი-თამაშებში მათი შედეგების მიხედვით. თითოეულ მოთამაშეს ენიჭება ტიერი (მაგალითად, HT1, LT5, RHT2) კონკრეტული მინი-თამაშისთვის, რომელშიც მონაწილეობა მიიღო. ეს ინდივიდუალური ტიერები ჯამდება და განსაზღვრავს მოთამაშის საერთო ქულებს.</p>
+            </InfoBlock>
+            
+            <div className="md:col-span-2 grid gap-8 lg:gap-10">
+                <InfoBlock icon={Gem} title="ქულების მინიჭების პრინციპი">
+                  <p>მოთამაშეები აგროვებენ ქულებს თითოეულ მინი-თამაშში მიღწეული ტიერის შესაბამისად. სისტემა აჯილდოებს მაღალ და სტაბილურ შედეგებს. ქულები ნაწილდება შემდეგნაირად:</p>
+                  <PointExamples />
+                  <p className="mt-3">მოთამაშის ჯამური ქულა არის ყველა მინი-თამაშში მიღებული ქულების ჯამი. "Overall Rankings" გვერდზე მოთამაშეები სწორედ ამ ჯამური ქულების მიხედვით არიან დალაგებული.</p>
+                </InfoBlock>
+            </div>
+          </div>
+        </section>
+
+        <section id="contact-section" className="py-16 md:py-24 bg-[#1f2028] rounded-2xl shadow-2xl border border-[#0a0e15]/50 scroll-mt-24">
+          <div className="container mx-auto px-6 lg:px-12 text-center">
+            <HelpCircle className="w-16 h-16 text-[#ffc125] mx-auto mb-6 opacity-80" />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#ffc125] mb-5">
+              ტაიერში მოსახვედრად შემოგვიერთდი
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12">
+
+            </p>
+            
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-5 sm:gap-8">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
-                    className="bg-[#1f2028] hover:bg-[#ffc125] hover:text-[#0a0e15] text-[#ffc125]/90 font-medium py-2.5 px-5 rounded-lg transition-colors duration-200 border border-[#ffc125]/50 flex items-center group"
+                    className="bg-transparent hover:bg-[#ffc125] hover:text-[#0a0e15] text-[#ffc125] font-semibold py-3.5 px-8 rounded-xl transition-all duration-300 border-2 border-[#ffc125] group text-md min-w-[250px] transform hover:scale-105 flex items-center justify-center shadow-lg hover:shadow-[#ffc125]/30 focus:ring-2 focus:ring-[#ffc125]/50"
                   >
-                    <MessageSquareText className="w-5 h-5 mr-2 transition-colors" />
-                    Discord Servers
-                    <ChevronRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <MessageSquareText className="w-5 h-5 mr-3 transition-colors" />
+                    Discord სერვერების ნახვა
+                    <ChevronRight className="w-5 h-5 ml-auto opacity-70 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1 duration-200" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-[#1f2028] border-[#0a0e15]/80 text-gray-300 w-64 shadow-xl">
+                <DropdownMenuContent 
+                  align="center" 
+                  sideOffset={15}
+                  className="bg-[#181920] border-2 border-[#ffc125]/30 text-gray-300 w-80 md:w-96 shadow-2xl rounded-xl p-2 backdrop-blur-sm bg-opacity-90"
+                >
                   {generalDiscordLink && generalDiscordLink.trim() !== '' && generalDiscordLink !== 'YOUR_MAIN_DISCORD_INVITE_LINK' ? (
                     <>
-                      <DropdownMenuLabel className="text-[#ffc125] px-2 py-1.5">მთავარი სერვერი</DropdownMenuLabel>
-                      <DropdownMenuItem asChild className="cursor-pointer hover:!bg-[#0a0e15] focus:!bg-[#0a0e15] hover:!text-gray-100 focus:!text-gray-100">
-                        <a href={generalDiscordLink} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
-                          <MessageSquareText className="w-4 h-4 mr-2.5 text-[#ffc125]/80" />
-                          General Community
-                          <ExternalLink className="w-3.5 h-3.5 ml-auto text-gray-500" />
+                      <DropdownMenuLabel className="text-[#ffc125] px-3 py-2.5 text-sm font-bold tracking-wider">მთავარი სერვერი</DropdownMenuLabel>
+                      <DropdownMenuItem asChild className="cursor-pointer hover:!bg-[#ffc125]/10 focus:!bg-[#ffc125]/20 hover:!text-[#ffc125] focus:!text-[#ffc125] rounded-lg m-1 p-0 transition-colors duration-150">
+                        <a href={generalDiscordLink} target="_blank" rel="noopener noreferrer" className="flex items-center w-full px-3 py-3 text-sm">
+                          <Users className="w-4 h-4 mr-3 text-[#ffc125]/80" />
+                          ზოგადი საზოგადოება
+                          <ExternalLink className="w-4 h-4 ml-auto text-gray-500 group-hover:text-[#ffc125]/70 transition-colors duration-150" />
                         </a>
                       </DropdownMenuItem>
                     </>
-                  ) : (
-                    // თუ მთავარი ლინკი არ არის, შეგვიძლია გამოვტოვოთ ეს სექცია ან ვაჩვენოთ მესიჯი
-                    // ამ შემთხვევაში, უბრალოდ გამოვტოვებთ მთავარი სერვერის ლეიბლს და აითემს, თუ ლინკი არასწორია
-                    null 
-                  )}
+                  ) : null }
 
                   {discordServersForMiniGames.length > 0 && (
                     <>
-                      {/* სეპარატორი მხოლოდ მაშინ, თუ მთავარი სერვერიც არის და გეიმმოდებიც */}
-                      {generalDiscordLink && generalDiscordLink.trim() !== '' && generalDiscordLink !== 'YOUR_MAIN_DISCORD_INVITE_LINK' && <DropdownMenuSeparator className="bg-[#0a0e15]/50 my-1" />}
-                      <DropdownMenuLabel className="text-[#ffc125] px-2 py-1.5">გეიმმოდების სერვერები</DropdownMenuLabel>
-                      {discordServersForMiniGames.map((game) => (
-                        <DropdownMenuItem key={game.id} asChild className="cursor-pointer hover:!bg-[#0a0e15] focus:!bg-[#0a0e15] hover:!text-gray-100 focus:!text-gray-100">
-                          <a href={game.discordLink!} target="_blank" rel="noopener noreferrer" className="flex items-center w-full">
-                            {getMiniGameIcon(game.id, "w-4 h-4 mr-2.5 text-[#ffc125]/80")}
-                            {game.name}
-                            <ExternalLink className="w-3.5 h-3.5 ml-auto text-gray-500" />
-                          </a>
-                        </DropdownMenuItem>
-                      ))}
+                      {(generalDiscordLink && generalDiscordLink.trim() !== '' && generalDiscordLink !== 'YOUR_MAIN_DISCORD_INVITE_LINK' && discordServersForMiniGames.length > 0) && 
+                        <DropdownMenuSeparator className="bg-[#ffc125]/20 my-2 mx-1" />}
+                      <DropdownMenuLabel className="text-[#ffc125] px-3 py-2.5 text-sm font-bold tracking-wider">მინი-თამაშების სერვერები</DropdownMenuLabel>
+                      <div className="grid grid-cols-2 gap-1 p-1">
+                        {discordServersForMiniGames.map((game) => (
+                          <DropdownMenuItem key={game.id} asChild className="cursor-pointer hover:!bg-[#ffc125]/10 focus:!bg-[#ffc125]/20 hover:!text-[#ffc125] focus:!text-[#ffc125] rounded-lg p-0 transition-colors duration-150">
+                            <a href={game.discordLink!} target="_blank" rel="noopener noreferrer" className="flex items-center w-full px-2.5 py-2.5 text-xs sm:text-sm">
+                              {getMiniGameIcon(game.id, "w-4 h-4 mr-2 shrink-0 text-[#ffc125]/80")}
+                              <span className="truncate flex-grow mr-1">{game.name}</span>
+                              <ExternalLink className="w-3.5 h-3.5 ml-auto shrink-0 text-gray-500 group-hover:text-[#ffc125]/70 transition-colors duration-150" />
+                            </a>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
                     </>
                   )}
                   
-                  {/* შეტყობინებები იმის მიხედვით, თუ რა მონაცემებია ხელმისაწვდომი */}
                   {discordServersForMiniGames.length === 0 && 
                    (!generalDiscordLink || generalDiscordLink.trim() === '' || generalDiscordLink === 'YOUR_MAIN_DISCORD_INVITE_LINK') && (
-                     <DropdownMenuItem disabled className="text-gray-500 px-2 py-1.5">დისკორდ სერვერები არ არის მითითებული.</DropdownMenuItem>
+                     <DropdownMenuItem disabled className="text-gray-500 px-3 py-3 italic text-sm">დისკორდ სერვერები არ არის მითითებული.</DropdownMenuItem>
                   )}
                   {discordServersForMiniGames.length === 0 && 
-                   (generalDiscordLink && generalDiscordLink.trim() !== '' && generalDiscordLink !== 'YOUR_MAIN_DISCORD_INVITE_LINK') && (
-                     <DropdownMenuItem disabled className="text-gray-500 px-2 py-1.5 italic">სხვა გეიმმოდის სერვერი არ მოიძებნა.</DropdownMenuItem>
+                   (generalDiscordLink && generalDiscordLink.trim() !== '' && generalDiscordLink !== 'YOUR_MAIN_DISCORD_INVITE_LINK') && ( 
+                     <DropdownMenuItem disabled className="text-gray-500 px-3 py-3 italic text-sm">მინი-თამაშების სხვა სერვერი არ მოიძებნა.</DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+              
+              {generalDiscordLink && generalDiscordLink.trim() !== '' && generalDiscordLink !== 'YOUR_MAIN_DISCORD_INVITE_LINK' && (
+                 <Button 
+                    asChild
+                    className="bg-[#ffc125] text-[#0a0e15] hover:brightness-90 font-semibold py-3.5 px-8 rounded-xl transition-all duration-300 min-w-[250px] transform hover:scale-105 shadow-lg hover:shadow-[#ffc125]/40 focus:ring-2 focus:ring-[#ffc125]/50 flex items-center justify-center"
+                  >
+                    <a href={generalDiscordLink} target="_blank" rel="noopener noreferrer">
+                      <Mail className="w-5 h-5 mr-2.5" /> მთავარ Discord-ზე გადასვლა
+                    </a>
+                  </Button>
+              )}
             </div>
           </div>
         </section>
-      </div>
+      </main>
+
+      <footer className="py-10 text-center border-t-2 border-[#1f2028]/70 mt-16">
+        <p className="text-gray-500 text-sm">&copy; {new Date().getFullYear()} Minecraft Player Tier List. ყველა უფლება დაცულია.</p>
+        <p className="text-xs text-gray-600 mt-2">შექმნილია საზოგადოებისთვის <span className="text-[#ffc125]/50">❤</span></p>
+      </footer>
+      
+      <style jsx global>{`
+        .animation-delay-500 { animation-delay: 0.5s; }
+        .animation-delay-700 { animation-delay: 0.7s; }
+        .animation-delay-1000 { animation-delay: 1s; }
+        .font-minecraft { /* დარწმუნდით, რომ ეს ფონტი ჩატვირთულია */ }
+        .animate-minecraft-float { /* თქვენი float ანიმაცია */ } 
+      `}</style>
     </div>
   );
 };

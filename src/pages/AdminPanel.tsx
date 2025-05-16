@@ -263,7 +263,7 @@ const AdminPanel = () => {
                             onClick={() => handleEditPlayer(player)}
                             variant="outline"
                             size="sm"
-                            className="border-[#ffc125]/70 text-[#ffc125]/90 hover:bg-[#ffc125]/10 hover:text-[#ffc125] focus:ring-1 focus:ring-[#ffc125] w-full sm:w-auto flex items-center justify-center"
+                            className="bg-[#0e1119] border-[#ffc125]/70 text-[#ffc125]/90 hover:bg-[#ffc125]/10 hover:text-[#ffc125] focus:ring-1 focus:ring-[#ffc125] w-full sm:w-auto flex items-center justify-center"
                           >
                             <Edit2 className="mr-1.5 h-3.5 w-3.5" /> Edit
                           </Button>

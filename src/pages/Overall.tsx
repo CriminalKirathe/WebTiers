@@ -258,9 +258,9 @@ const Overall = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 md:py-12">
         <div className="text-center mb-8 sm:mb-12 md:mb-16">
              <Trophy className="w-14 h-14 sm:w-16 md:w-20 text-[#ffc125] mx-auto mb-3 sm:mb-4 filter drop-shadow-[0_0_10px_rgba(255,193,37,0.5)]" strokeWidth={1.5}/>
-             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-minecraft text-[#ffc125] mb-2 sm:mb-3 tracking-wider">
-                 Overall Rankings
-             </h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-minecraft font-bold text-[#ffc125] mb-2 sm:mb-3 tracking-wider">
+              Overall Rankings
+              </h1>
              <p className="text-sm sm:text-md md:text-lg text-gray-400 max-w-xl md:max-w-2xl mx-auto">
                  Players ranked by their total points, showcasing skill and dedication across all mini-games.
              </p>
